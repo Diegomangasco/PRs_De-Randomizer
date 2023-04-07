@@ -1,0 +1,31 @@
+Most relevant features
+                                       0
+0              802.11 Vendor Specific-ID
+1  802.11 HT Capabilities-RX_MSC_Bitmask
+2          802.11 Information Element-ID
+3                    RadioTap-notdecoded
+4        802.11 Information Element-info
+5           802.11 DSSS Parameter Set-ID
+6                          802.11-FCS-SC
+Variance ratio (%)
+[49.04987037 17.08995586 10.32834051  6.9735117   5.68208481  2.72703035
+  1.54094901]
+Singular values
+[170.91157714 100.88416884  78.42740106  64.44338091  58.17098338
+  40.29930306  30.29330687]
+
+Most relevant features for PCA
+                                       0
+0              802.11 Vendor Specific-ID
+1          802.11 Information Element-ID
+2        802.11 Information Element-info
+3           802.11 DSSS Parameter Set-ID
+4        802.11 Information Element-info
+5  802.11 HT Capabilities-RX_MSC_Bitmask
+6                          802.11-FCS-SC
+Features variance ratio (%)
+[6.17126449e+01 2.78531694e+01 6.61307641e+00 2.75803959e+00
+ 7.69563184e-01 2.05810050e-01 1.67860205e-02]
+Features singular values
+[1788.91704428 1201.82278158  585.6051568   378.18419044  199.76769722
+  103.30858451   29.50373489]
