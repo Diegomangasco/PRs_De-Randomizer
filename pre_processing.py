@@ -24,37 +24,32 @@ DEVICES = {
 }
 
 
-def z_normalization(pkt_list: list[tuple[int, dict]]) -> None:
+def z_normalization(features: dict) -> None:
     """
     Function that applies the Z Normalization to the dataset.
 
-    :param pkt_list: a list that contains dictionaries with keys (fields) and values
+    :param pkts: a list that contains dictionaries with keys (fields) and values
     :return: the normalized dataset
     """
 
-    # Collect all the dataset values
+    # Collect the dataset values
     values = list()
-    values += [list(pkt[1].values()) for pkt in pkt_list]
+    for k in features.keys():
+        if k != "Device":
+            values += list(features[k])
 
-    # Transform the list in numpy array
     values = np.array(values)
 
     # Calculate dataset mean and standard deviation
-    mu = values.mean()
-    standard_dev = values.std()
+    mu = values.mean(axis=0)
+    standard_dev = values.std(axis=0)
 
     # Apply the Z Normalization
     # The dataset mean will be 0 and its standard deviation will be 1
-    for pkt in pkt_list:
-        for k in pkt[1].keys():
-            pkt[1][k] = (pkt[1][k] - mu) / standard_dev
-
-    # Test the normalization result
-    new_values = list()
-    new_values += [list(pkt[1].values()) for pkt in pkt_list]
-    new_values = np.array(new_values)
-    assert round(new_values.mean()) == 0.0
-    assert round(new_values.std()) == 1.0
+    for k in features.keys():
+        if k != "Device":
+            for i in range(len(features[k])):
+                features[k][i] = (features[k][i] - mu) / standard_dev
 
 
 class PreProcessing:
@@ -132,7 +127,7 @@ class PreProcessing:
 
                         # Add the new value to the dictionary
                         # Log scaling for the values
-                        packets[i][layer + "-" + key.strip('| ')] = np.log10(value+1)
+                        packets[i][layer + "-" + key.strip('| ')] = np.log10(value+1.0)
 
             # Set the total probes list by filtering the initial one
             all_packets_tmp += packets
@@ -151,11 +146,11 @@ class PreProcessing:
             diff = fields.difference(keys)
             for d in diff:
                 # Fill the missing fields
-                features[d].append(0.0)
+                features[d].append(np.log10(1.0))
 
         # NORMALIZATION
         # Apply Z Normalization to the dataset
-        #z_normalization(all_packets)
+        z_normalization(features)
 
         # DATAFRAME CREATION
         df = pd.DataFrame(features, columns=list(fields))
