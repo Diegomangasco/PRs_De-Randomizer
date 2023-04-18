@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-def explainable_PCA(reduction: PCA, feature_names: list) -> None:
+def explainable_PCA(reduction: PCA, feature_names: list) -> list:
 
     # number of components
     n_pcs = reduction.components_.shape[0]
@@ -15,8 +15,8 @@ def explainable_PCA(reduction: PCA, feature_names: list) -> None:
 
     # get the names
     most_important_names = [feature_names[most_important[i]] for i in range(n_pcs)]
-    dic = [most_important_names[i] for i in range(n_pcs)]
-    df = pd.DataFrame(dic)
+    names = [most_important_names[i] for i in range(n_pcs)]
+    df = pd.DataFrame(names)
 
     print("Most relevant features for PCA")
     print(df)
@@ -27,5 +27,8 @@ def explainable_PCA(reduction: PCA, feature_names: list) -> None:
 
 def principal_component_analysis(features: pd.DataFrame, labels: list, components: int) -> None:
     pca = PCA(n_components=components)
-    out = pca.fit_transform(features, labels)
-    explainable_PCA(pca, list(features.keys()))
+    out = pca.fit_transform(features)
+    features_names = list(features.keys())
+    most_relevant_features = explainable_PCA(pca, features_names)
+    df = pd.DataFrame(out, columns=most_relevant_features)
+    return df

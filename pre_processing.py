@@ -49,9 +49,8 @@ class PreProcessing:
         * self._packets = a list that contains all the read packets.
     """
 
-    def __init__(self, json_flag: bool):
+    def __init__(self):
         logging.basicConfig(level=logging.INFO, format='%(message)s')
-        self._json = json_flag
         self._packets = pd.DataFrame()
 
     def get_packets(self) -> pd.DataFrame:
@@ -146,13 +145,24 @@ class PreProcessing:
 
         with open(OUTPUT_DIRECTORY + file + ".txt") as txt_writer:
             txt_writer.write(", ".join(fields))
-        
-        np.savetxt(OUTPUT_DIRECTORY + file + ".txt", .T, fmt='%1.4f')
+        features = np.array(list(features.values()))
+        features = features.T
+        np.savetxt(OUTPUT_DIRECTORY + file + ".txt", features, fmt='%1.7f')
 
-    def read_txt(self) -> None:
+    def read_txt(self, file: str) -> None:
         """
         Function to read the 'packets.json' file if present.
         :return None
         """
-
+        
+        features = dict()
+        # TODO pandas readtxt
+        with open(OUTPUT_DIRECTORY + file + ".txt", "r") as txt_reader:
+            line = txt_reader.readline()
+            while line:
+                if "," not in line:
+                    features = None
+                else:
+                    features = {k: list() for k in line.split(", ")}
+                line = txt_reader.readline()
         self._packets = pd.read_json(OUTPUT_DIRECTORY + "packets.json", orient='columns')

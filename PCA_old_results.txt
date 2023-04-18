@@ -1,0 +1,17 @@
+MODULE + LOG SCALING
+
+Most relevant features for PCA
+                                       0
+0              802.11 Vendor Specific-ID
+1  802.11 HT Capabilities-RX_MSC_Bitmask
+2          802.11 Information Element-ID
+3                    RadioTap-notdecoded
+4        802.11 Information Element-info
+5           802.11 DSSS Parameter Set-ID
+6                          802.11-FCS-SC
+Variance ratio (%)
+[49.04987037 17.08995586 10.32834051  6.9735117   5.68208481  2.72703035
+  1.54094901]
+Singular values
+[170.91157714 100.88416884  78.42740106  64.44338091  58.17098338
+  40.29930306  30.29330687]

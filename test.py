@@ -3,12 +3,17 @@ from dimensionality_reduction import *
 import numpy as np
 import pandas as pd
 
-p = PreProcessing(True)
-p.read_pcap()
-p.read_json()
+p = PreProcessing()
+p.read_pcap("packets")
 pkts = p.get_packets()
 f = pd.DataFrame({key: value for key, value in pkts.items() if key != "Device"})
 l = np.array(pkts["Device"])
-principal_component_analysis(f, l, 7)
-#linear_discriminant_analysis(f, l, 7)
+#out_pca = principal_component_analysis(f, 20)
+#out_pca = pd.DataFrame(out_pca)
+#out_lda = linear_discriminant_analysis(out_pca, l, 7)
+#out_pca = principal_component_analysis(f, 7)
+#print(out_pca)
+
+#print(out_pca.shape)
+#print(out_lda.shape)
 
