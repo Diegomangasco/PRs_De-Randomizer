@@ -1,8 +1,6 @@
 #  Copyright (c) 2023 Diego Gasco (diego.gasco99@gmail.com), Diegomangasco on GitHub
 
-import copy
 import scapy.all as sc
-import json
 import logging
 from hashlib import sha1
 import numpy as np
@@ -10,18 +8,8 @@ import pandas as pd
 
 MIN_FIELDS = 1
 INPUT_DIRECTORY = "./pcap_files/"
-OUTPUT_DIRECTORY = "./json_files/"
-DEVICES = {
-    "huawei": 0,
-    "ipad": 1,
-    "iphone6": 2,
-    "iphone11": 3,
-    "lenovo": 4,
-    "macbookair": 5,
-    "oneplus": 6,
-    "samsung": 7,
-    "xiaomi": 8,
-}
+OUTPUT_DIRECTORY = "./features_files/"
+CUT_INDEX = 20
 
 
 def z_normalization(features: dict) -> None:
@@ -69,7 +57,7 @@ class PreProcessing:
     def get_packets(self) -> pd.DataFrame:
         return self._packets.copy(deep=True)
 
-    def read_pcap(self, append=False) -> None:
+    def read_pcap(self, file: str) -> None:
         """
         Function to read the .pcap files and store the result in a .json file.
 
@@ -77,96 +65,94 @@ class PreProcessing:
         :return None
         """
 
-        # Set Scapy to default settings without the help of Wireshark dictionary
+        logging.info("Analysing pcap file: " + file)
 
-        # Instance of the dict and list that will contain all the probes read
-        all_packets = dict()
-        all_packets_tmp = list()
+        # READ FILES
 
-        # For each device present in list
-        for dev in DEVICES.keys():
-            logging.info("Analysing device: " + dev)
-            # Read from file using scapy
-            capture = sc.rdpcap(INPUT_DIRECTORY + dev + ".pcap")
+        # Read the device ID from the .txt file
+        devices_list = list()
+        with open(INPUT_DIRECTORY + file + ".txt", "r") as txt_reader:
+            line = txt_reader.readline()
+            while line:
+                devices_list.append(int(line))
+                line = txt_reader.readline()
 
-            # tmp_packets contains all the probe requests for the selected device
-            tmp_packets = [cap.show2(dump=True) for cap in capture]
+        # Read from file using scapy
+        capture = sc.rdpcap(INPUT_DIRECTORY + file + ".pcap")
 
-            # Create a data structure for storing packets
-            # Each element (probe request) has a dictionary
-            # Inside the dictionary we have a key for each layer field and the relative value
-            # In particular, there are fields with the same name in different layers, so we use the combination of
-            # layer name and field name (i.e. layer-field) as the keys of the dictionary
-            packets = [dict() for _ in tmp_packets]
+        # tmp_packets contains all the probe requests for the selected device
+        scapy_packets = [cap.show2(dump=True) for cap in capture]
 
-            # PARSE AND SCALING
-            # Parse every probe request
-            for i, pkt in enumerate(tmp_packets):
-                lines = pkt.split('\n')
-                layer = None
-                packets[i]["Device"] = dev
-                # Go inside the packet if is length enough
-                for line in lines:
-                    if "###" in line and "|###" not in line:
-                        # Problem: Some fields have the same name inside different layers
-                        # Solution: Use the layer name to create the key for the specific field inside the dictionary
-                        layer = line.strip('#[] ')
-                    elif '=' in line:
-                        # Add the value for the specific field
-                        key, val = line.split('=', 1)
-                        value = val.strip().replace("'", "").replace(" ", "").lower()
-                        if any(ch.isalpha() for ch in value):
-                            # If there are some alpha chars, use sha1
-                            value = bytes(value, 'utf-8')
-                            value = sha1(value).hexdigest()
-                            # Reduce the number coming from sha1
-                            value = float.fromhex(value) #% (10 ** 5)
-                        else:
-                            # Fields that are only digits
-                            value = float(value) if len(value) > 0 else 0.0
+        # Create a data structure for storing packets
+        # Each element (probe request) has its own dictionary
+        # Inside the dictionary I have a key for each layer field and the relative value
+        # In particular, there are fields with the same name in different layers
+        # For these cases I use the combination of layer name and field name (i.e. layer-field) as the dictionary's keys
+        packets = [dict() for _ in scapy_packets]
 
-                        # Add the new value to the dictionary
-                        # Log scaling for the values
-                        packets[i][layer + "-" + key.strip('| ')] = np.log10(value+1.0)
+        # PARSE AND SCALING
 
-            # Set the total probes list by filtering the initial one
-            all_packets_tmp += packets
+        # Parse every probe request
+        for i, pkt in enumerate(scapy_packets):
+            lines = pkt.split('\n')
+            layer = None
+            packets[i]["Device"] = devices_list[i]
+            # Go inside the packet if is length enough
+            for line in lines:
+                if "###" in line and "|###" not in line:
+                    # Problem: Some fields have the same name inside different layers
+                    # Solution: Use the layer name to create the key for the specific field inside the dictionary
+                    layer = line.strip('#[] ')
+                elif '=' in line:
+                    # Add the value for the specific field
+                    key, val = line.split('=', 1)
+                    value = val.strip().replace("'", "").replace(" ", "").lower()
+                    # If there are some alpha chars, use sha1
+                    if any(ch.isalpha() for ch in value):
+                        value = bytes(value, 'utf-8')
+                        value = sha1(value).hexdigest()[:CUT_INDEX]
+                        value = float.fromhex(value)
+                    else:
+                        # Fields that are digits
+                        value = float(value) if len(value) > 0 else 0.0
+                    # Add the new value to the dictionary
+                    packets[i][layer + "-" + key.strip('| ')] = value
 
         # MISSING VALUES
+
         # Take one packet with the maximum number of fields
-        fields = set(max(all_packets_tmp, key=lambda x: len(x.keys())).keys())
-        # Create one list for each feature
+        fields = set(max(packets, key=lambda x: len(x.keys())).keys())
+        # Create a dictionary with one list for each feature
+        # This will be the base for the features matrix
         features = {key: list() for key in fields}
-        # Fill al the missed fields with 0.0
-        for pkt in all_packets_tmp:
+        # Fill all the missed fields with 0.0
+        for pkt in packets:
             keys = set(pkt.keys())
+            # Fill the existing features
             for k in keys:
-                # Fill the existing keys
                 features[k].append(pkt[k])
+            # Check which are the missed features in the packet
             diff = fields.difference(keys)
+            # Fill the missing fields
             for d in diff:
-                # Fill the missing fields
-                features[d].append(np.log10(1.0))
+                features[d].append(0.0)
 
         # NORMALIZATION
+
         # Apply Z Normalization to the dataset
-        z_normalization(features)
+        #z_normalization(features)
 
-        # DATAFRAME CREATION
-        df = pd.DataFrame(features, columns=list(fields))
+        # DATASET STORAGE
 
-        logging.info("Save the .pcap captures in the .json file")
+        with open(OUTPUT_DIRECTORY + file + ".txt") as txt_writer:
+            txt_writer.write(", ".join(fields))
+        
+        np.savetxt(OUTPUT_DIRECTORY + file + ".txt", .T, fmt='%1.4f')
 
-        # DATAFRAME STORAGE
-        df.to_json(OUTPUT_DIRECTORY + "packets.json", orient="columns")
-        # Set the json flag to true
-        self._json = True
-
-    def read_json(self) -> None:
+    def read_txt(self) -> None:
         """
         Function to read the 'packets.json' file if present.
         :return None
         """
 
-        assert self._json is True
         self._packets = pd.read_json(OUTPUT_DIRECTORY + "packets.json", orient='columns')
