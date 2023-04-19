@@ -71,7 +71,6 @@ class PreProcessing:
 
         # tmp_packets contains all the probe requests for the selected device
         scapy_packets = [cap.show2(dump=True) for cap in capture]
-        print(scapy_packets[0])
 
         # Create a data structure for storing packets
         # Each element (probe request) has its own dictionary
@@ -126,15 +125,13 @@ class PreProcessing:
             # Check which are the missed features in the packet
             diff = fields.difference(keys)
             # Fill the existing features
-            if len(diff) < ALPHA:
-                for k in keys:
-                    features[k].append(pkt[k])
-                # Fill the missing fields
-                for d in diff:
-                    features[d].append(np.nan)
+            for k in keys:
+                features[k].append(pkt[k])
+            # Fill the missing fields
+            for d in diff:
+                features[d].append(np.nan)
 
         fields = list(features.keys())
-        print(fields)
         features = np.array(list(features.values()))
         features = features.T
 
