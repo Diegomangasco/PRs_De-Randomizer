@@ -5,39 +5,13 @@ import logging
 from hashlib import sha1
 import numpy as np
 import pandas as pd
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
 
-MIN_FIELDS = 1
-INPUT_DIRECTORY = "./pcap_files/"
+INPUT_DIRECTORY = "./input_files/"
 OUTPUT_DIRECTORY = "./features_files/"
-CUT_INDEX = 20
-
-
-def z_normalization(features: dict) -> None:
-    """
-    Function that applies the Z Normalization to the dataset.
-
-    :param pkts: a list that contains dictionaries with keys (fields) and values
-    :return: the normalized dataset
-    """
-
-    # Collect the dataset values
-    values = list()
-    for k in features.keys():
-        if k != "Device":
-            values += list(features[k])
-
-    values = np.array(values)
-
-    # Calculate dataset mean and standard deviation
-    mu = values.mean(axis=0)
-    standard_dev = values.std(axis=0)
-
-    # Apply the Z Normalization
-    # The dataset mean will be 0 and its standard deviation will be 1
-    for k in features.keys():
-        if k != "Device":
-            for i in range(len(features[k])):
-                features[k][i] = (features[k][i] - mu) / standard_dev
+CUT_INDEX = 20  # Derived from the theorem
+ALPHA = 10  # Heuristic Parameter
 
 
 class PreProcessing:
@@ -45,42 +19,59 @@ class PreProcessing:
     Class to read and clean the datas from .pcap files.
 
     The data structures used are:
-        * self._json: a boolean flag that tells if the .json file has been already written or not.
-        * self._packets = a list that contains all the read packets.
+        * self._features = a DataFrame with all the features organized in tabular format
+        * self._total_devices = the number of total devices registered in the simulation
+        * self._devices_list = the list of all devices that sent a probe
     """
 
     def __init__(self):
         logging.basicConfig(level=logging.INFO, format='%(message)s')
-        self._packets = pd.DataFrame()
+        self._features = None
+        self._devices_IDs = None
+        self._total_devices = None
 
-    def get_packets(self) -> pd.DataFrame:
-        return self._packets.copy(deep=True)
+    def get_features(self) -> pd.DataFrame:
+
+        assert self._features is not None
+        return self._features.copy(deep=True)
+
+    def get_devices_IDs(self) -> list:
+
+        assert self._devices_IDs is not None
+        return self._devices_IDs.copy()
+    
+    def get_devices_number(self) -> int:
+
+        assert self._total_devices is not None
+        return self._total_devices
 
     def read_pcap(self, file: str) -> None:
         """
-        Function to read the .pcap files and store the result in a .json file.
+        Function to read the .pcap files and store the result in a .txt file.
 
-        :param append: boolean flag, if it is True, the method append the packets in an existing .json file.
+        :param file: a string that indicates the name of the input/output files.
         :return None
         """
 
-        logging.info("Analysing pcap file: " + file)
-
         # READ FILES
 
-        # Read the device ID from the .txt file
-        devices_list = list()
+        logging.info("Reading .pcap and .txt files")
+
+        # Read the device IDs from the .txt file
+        self._devices_IDs = list()
         with open(INPUT_DIRECTORY + file + ".txt", "r") as txt_reader:
             line = txt_reader.readline()
             while line:
-                devices_list.append(int(line))
+                self._devices_IDs.append(int(line))
                 line = txt_reader.readline()
+        self._total_devices = max(self._devices_IDs)
 
         # Read from file using scapy
         capture = sc.rdpcap(INPUT_DIRECTORY + file + ".pcap")
 
         # tmp_packets contains all the probe requests for the selected device
         scapy_packets = [cap.show2(dump=True) for cap in capture]
+        print(scapy_packets[0])
 
         # Create a data structure for storing packets
         # Each element (probe request) has its own dictionary
@@ -89,19 +80,20 @@ class PreProcessing:
         # For these cases I use the combination of layer name and field name (i.e. layer-field) as the dictionary's keys
         packets = [dict() for _ in scapy_packets]
 
-        # PARSE AND SCALING
+        # PARSE
+
+        logging.info("Parsing .pacp file")
 
         # Parse every probe request
         for i, pkt in enumerate(scapy_packets):
             lines = pkt.split('\n')
             layer = None
-            packets[i]["Device"] = devices_list[i]
             # Go inside the packet if is length enough
             for line in lines:
                 if "###" in line and "|###" not in line:
                     # Problem: Some fields have the same name inside different layers
                     # Solution: Use the layer name to create the key for the specific field inside the dictionary
-                    layer = line.strip('#[] ')
+                    layer = line.strip('#[] ').strip().replace(" ", "_")
                 elif '=' in line:
                     # Add the value for the specific field
                     key, val = line.split('=', 1)
@@ -113,56 +105,77 @@ class PreProcessing:
                         value = float.fromhex(value)
                     else:
                         # Fields that are digits
-                        value = float(value) if len(value) > 0 else 0.0
+                        value = float(value) if len(value) > 0 else None
                     # Add the new value to the dictionary
-                    packets[i][layer + "-" + key.strip('| ')] = value
+                    if value:
+                        packets[i][layer + "-" + key.strip('| ')] = value
 
-        # MISSING VALUES
+        # BUILD FEATURES MATRIX
+
+        logging.info("Building features")
 
         # Take one packet with the maximum number of fields
         fields = set(max(packets, key=lambda x: len(x.keys())).keys())
         # Create a dictionary with one list for each feature
         # This will be the base for the features matrix
         features = {key: list() for key in fields}
-        # Fill all the missed fields with 0.0
+        # Fill all the missed fields with the median
+        # If some frame has more than ALPHA missing fileds, ignore it
         for pkt in packets:
             keys = set(pkt.keys())
-            # Fill the existing features
-            for k in keys:
-                features[k].append(pkt[k])
             # Check which are the missed features in the packet
             diff = fields.difference(keys)
-            # Fill the missing fields
-            for d in diff:
-                features[d].append(0.0)
+            # Fill the existing features
+            if len(diff) < ALPHA:
+                for k in keys:
+                    features[k].append(pkt[k])
+                # Fill the missing fields
+                for d in diff:
+                    features[d].append(np.nan)
 
-        # NORMALIZATION
+        fields = list(features.keys())
+        print(fields)
+        features = np.array(list(features.values()))
+        features = features.T
 
-        # Apply Z Normalization to the dataset
-        #z_normalization(features)
+        # MISSING VALUES
+
+        logging.info("Filling missing fields")
+        
+        mean_imputer = SimpleImputer(missing_values=np.nan, strategy="mean")  # Strategy can change
+        features = mean_imputer.fit_transform(features)
+
+        # FEATURES SCALING
+
+        logging.info("Scaling features")
+
+        std_scaler = StandardScaler()
+        features = std_scaler.fit_transform(features)
+
+        # DATASET SAVING
+
+        logging.info("Saving features in memory")
+
+        self._features = pd.DataFrame(features, columns=fields)
 
         # DATASET STORAGE
 
-        with open(OUTPUT_DIRECTORY + file + ".txt") as txt_writer:
-            txt_writer.write(", ".join(fields))
-        features = np.array(list(features.values()))
-        features = features.T
-        np.savetxt(OUTPUT_DIRECTORY + file + ".txt", features, fmt='%1.7f')
+        logging.info("Saving features inside .txt file")
+
+        np.savetxt(OUTPUT_DIRECTORY + file + ".txt", features, fmt='%1.7f', header=" ".join(fields))
 
     def read_txt(self, file: str) -> None:
         """
-        Function to read the 'packets.json' file if present.
+        Function to read the 'packets.txt' file if present.
         :return None
         """
         
-        features = dict()
-        # TODO pandas readtxt
-        with open(OUTPUT_DIRECTORY + file + ".txt", "r") as txt_reader:
+        self._features = pd.read_csv(OUTPUT_DIRECTORY + file + ".txt", sep = " ", comment="")
+        # Read the device IDs from the .txt file
+        self._devices_IDs = list()
+        with open(INPUT_DIRECTORY + file + ".txt", "r") as txt_reader:
             line = txt_reader.readline()
             while line:
-                if "," not in line:
-                    features = None
-                else:
-                    features = {k: list() for k in line.split(", ")}
+                self._devices_IDs.append(int(line))
                 line = txt_reader.readline()
-        self._packets = pd.read_json(OUTPUT_DIRECTORY + "packets.json", orient='columns')
+        self._total_devices = max(self._devices_IDs)

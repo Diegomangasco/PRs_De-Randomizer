@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-def explainable_PCA(reduction: PCA, feature_names: list) -> list:
+def explainable_PCA(reduction: PCA, feature_names: list) -> None:
 
     # number of components
     n_pcs = reduction.components_.shape[0]
@@ -25,10 +25,13 @@ def explainable_PCA(reduction: PCA, feature_names: list) -> list:
     print("Features singular values")
     print(reduction.singular_values_)
 
-def principal_component_analysis(features: pd.DataFrame, labels: list, components: int) -> None:
+
+def principal_component_analysis(features: pd.DataFrame, labels: list, components: int, explainable: bool) -> None:
     pca = PCA(n_components=components)
+    # Apply Principal Component Analysis
     out = pca.fit_transform(features)
     features_names = list(features.keys())
-    most_relevant_features = explainable_PCA(pca, features_names)
-    df = pd.DataFrame(out, columns=most_relevant_features)
+    if explainable:
+        explainable_PCA(pca, features_names)
+    df = pd.DataFrame(out)
     return df
