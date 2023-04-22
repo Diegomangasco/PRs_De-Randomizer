@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 p = PreProcessing()
-p.read_pcap("out_file_")
+p.read_pcap("out_file")
 f = p.get_features()
 n = p.get_devices_IDs()
 tn = p.get_devices_number()

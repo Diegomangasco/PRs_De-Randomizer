@@ -1,6 +1,7 @@
 #  Copyright (c) 2023 Diego Gasco (diego.gasco99@gmail.com), Diegomangasco on GitHub
 
 import scapy.all as sc
+import pyshark
 import logging
 from hashlib import sha1
 import numpy as np
@@ -66,79 +67,47 @@ class PreProcessing:
                 line = txt_reader.readline()
         self._total_devices = max(self._devices_IDs)
 
-        # Read from file using scapy
-        capture = sc.rdpcap(INPUT_DIRECTORY + file + ".pcap")
+        # Read from file using pyshark
+        pyshark_packets = pyshark.FileCapture(INPUT_DIRECTORY + file + ".pcap")
 
-        # tmp_packets contains all the probe requests for the selected device
-        scapy_packets = [cap.show2(dump=True) for cap in capture]
-
-        # Create a data structure for storing packets
-        # Each element (probe request) has its own dictionary
-        # Inside the dictionary I have a key for each layer field and the relative value
-        # In particular, there are fields with the same name in different layers
-        # For these cases I use the combination of layer name and field name (i.e. layer-field) as the dictionary's keys
-        packets = [dict() for _ in scapy_packets]
+        fields = list()
+        features = dict()
 
         # PARSE
 
         logging.info("Parsing .pacp file")
 
         # Parse every probe request
-        for i, pkt in enumerate(scapy_packets):
-            lines = pkt.split('\n')
-            layer = None
-            # Go inside the packet if is length enough
-            for line in lines:
-                if "###" in line and "|###" not in line:
-                    # Problem: Some fields have the same name inside different layers
-                    # Solution: Use the layer name to create the key for the specific field inside the dictionary
-                    layer = line.strip('#[] ').strip().replace(" ", "_")
-                elif '=' in line:
-                    # Add the value for the specific field
-                    key, val = line.split('=', 1)
-                    value = val.strip().replace("'", "").replace(" ", "").lower()
-                    # If there are some alpha chars, use sha1
-                    if any(ch.isalpha() for ch in value):
+        for i, pkt in enumerate(pyshark_packets):
+            for i in range(len(pkt.layers)):
+                keys = pkt.layers[i]._all_fields.keys()
+                for k in keys:
+                    value = pkt.layers[i]._all_fields.get(k)
+                    if any(ch.isalpha() or ch == ":" for ch in value):
                         value = bytes(value, 'utf-8')
                         value = sha1(value).hexdigest()[:CUT_INDEX]
-                        value = float.fromhex(value)
+                        value = int(float.fromhex(value))
                     else:
                         # Fields that are digits
-                        value = float(value) if len(value) > 0 else None
+                        value = int(value)
                     # Add the new value to the dictionary
-                    if value:
-                        packets[i][layer + "-" + key.strip('| ')] = value
+                    if k in features.keys():
+                        features[k].append(value)
+                    else:
+                        features[k] = list()
+                        features[k].append(value)
 
         # BUILD FEATURES MATRIX
 
-        logging.info("Building features")
+        logging.info("Building features matrix")
 
-        # Take one packet with the maximum number of fields
-        fields = set(max(packets, key=lambda x: len(x.keys())).keys())
-        # Create a dictionary with one list for each feature
-        # This will be the base for the features matrix
-        features = {key: list() for key in fields}
-        # Fill all the missed fields with the median
-        # If some frame has more than ALPHA missing fileds, ignore it
-        for pkt in packets:
-            keys = set(pkt.keys())
-            # Check which are the missed features in the packet
-            diff = fields.difference(keys)
-            # Fill the existing features
-            for k in keys:
-                features[k].append(pkt[k])
-            # Fill the missing fields
-            for d in diff:
-                features[d].append(np.nan)
-
-        fields = list(features.keys())
         features = np.array(list(features.values()))
         features = features.T
 
         # MISSING VALUES
 
         logging.info("Filling missing fields")
-        
+
         mean_imputer = SimpleImputer(missing_values=np.nan, strategy="mean")  # Strategy can change
         features = mean_imputer.fit_transform(features)
 
