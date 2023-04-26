@@ -4,9 +4,14 @@ from sklearn.decomposition import PCA
 import numpy as np
 import pandas as pd
 
+OUTPUT_DIRECTORY = "./features_files/"
+
+
+def read_principal_component_analysis_file(file: str) -> pd.DataFrame:
+    return pd.read_csv(OUTPUT_DIRECTORY + file + ".csv", sep=",")
+
 
 def explainable_principal_component_analysis(reduction: PCA, feature_names: list) -> None:
-
     # number of components
     n_pcs = reduction.components_.shape[0]
 
@@ -34,4 +39,5 @@ def principal_component_analysis(features: pd.DataFrame, components: int, explai
     if explainable:
         explainable_principal_component_analysis(pca, features_names)
     df = pd.DataFrame(out)
+    df.to_csv(OUTPUT_DIRECTORY + "after_PCA_" + str(components) + ".csv", sep=",", float_format="%.4f", index=False)
     return df

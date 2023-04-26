@@ -1,35 +1,13 @@
-LOG SCALING ONLY
-
-Most relevant features for PCA
-                                       0
-0              802.11 Vendor Specific-ID
-1          802.11 Information Element-ID
-2        802.11 Information Element-info
-3           802.11 DSSS Parameter Set-ID
-4        802.11 Information Element-info
-5  802.11 HT Capabilities-RX_MSC_Bitmask
-6                          802.11-FCS-SC
+0  wlan.extcap.serv_int_granularity
+1                        wlan.bssid
+2  wlan.txbf.fm.uncompressed.maxant
+3              wlan.ht.capabilities
+4                radiotap.flags.fcs
+5          radiotap.present.antenna
+6            radiotap.present.he_mu
 Features variance ratio (%)
-[61.7126449 27.8531694 6.61307641 2.75803959
- 0.769563184 0.205810050 0.0167860205]
+[48.47076163 10.20105918  9.47362526  5.4276      4.29966995  3.78266196
+  3.35386369]
 Features singular values
-[1788.91704428 1201.82278158  585.6051568   378.18419044  199.76769722
-  103.30858451   29.50373489]
-
-LOG SCALING + Z NORMALIZATION
-
-Most relevant features for PCA
-                                       0
-0              802.11 Vendor Specific-ID
-1          802.11 Information Element-ID
-2        802.11 Information Element-info
-3           802.11 DSSS Parameter Set-ID
-4        802.11 Information Element-info
-5  802.11 HT Capabilities-RX_MSC_Bitmask
-6                          802.11-FCS-SC
-Features variance ratio (%)
-[61.7126449 27.8531694 6.61307641 2.75803959
- 0.769563184 0.205810050 0.0167860205]
-Features singular values
-[87.36561726 58.69360431 28.59928925 18.46943956  9.7560858   5.04529725
-  1.44087845]
+[257.60092804 118.17623099 113.8847577   86.20082419  76.722909
+  71.96250408  67.76106222]

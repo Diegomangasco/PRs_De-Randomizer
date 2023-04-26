@@ -50,46 +50,51 @@ def OPTICS_algorithm(
     return clustering.labels_
 
 
-def DBSCAN_cross_validation(data: DataFrame, labels: list):
-    metrics = ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan", "minkowski"]
+def DBSCAN_cross_validation(data: DataFrame, devices_number: int):
+    metrics = ["cityblock", "euclidean", "l1", "l2", "manhattan", "minkowski"]
     p = [1, 2, 3]
-    eps = list(range(0.1, 5, 0.1))
+    eps = [0.01, 0.1, 1, 10, 100, 1000]
     algorithm = ["auto", "ball_tree", "kd_tree", "brute"]
     min_samples = [2, 3, 4, 5, 6, 7, 8, 9, 10]
     elements = [min_samples, eps, metrics, p, algorithm]
     combinations = list(product(*elements))
 
-    best_res = 0.0
+    print(f"Combinations: {len(combinations)}")
+
+    best_err = 1e10
     best_params = None
-    for comb in combinations:
-        res = OPTICS_algorithm(data, comb, False)
-        accuracy = evaluation(res, labels)
-        if accuracy > best_res:
-            best_res = accuracy
+    for i, comb in enumerate(combinations):
+        if (i+1) % 50 == 0:
+            print(f"Combination number: {i+1}")
+        res = DBSCAN_algorithm(data, comb, False)
+        err = clustering_error(res, devices_number)
+        if err < best_err:
+            print(f"Find best in combination number: {i+1}")
+            best_err = err
             best_params = comb
 
-    return best_res, best_params
+    return best_err, best_params
 
 
-def OPTICS_cross_validation(data: DataFrame, labels: list):
+def OPTICS_cross_validation(data: DataFrame, devices_number: int):
     metrics = ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan", "minkowski"]
     p = [1, 2, 3]
-    eps = list(range(0.1, 5, 0.1))
-    xi = list(range(0, 1, 0.01))
+    eps = [0.01, 0.1, 1, 10, 100, 1000]
+    xi = list(range(0.0, 1.0, 0.01))
     cluster_method = ["xi", "dbscan"]
     algorithm = ["auto", "ball_tree", "kd_tree", "brute"]
     min_samples = [2, 3, 4, 5, 6, 7, 8, 9, 10]
-    min_cluster_size = list(range(0, 1, 0.1))
+    min_cluster_size = list(range(0.0, 1.0, 0.1))
     elements = [min_samples, eps, metrics, xi, min_cluster_size, p, cluster_method, algorithm]
     combinations = list(product(*elements))
 
-    best_res = 0.0
+    best_err = 1e10
     best_params = None
     for comb in combinations:
         res = OPTICS_algorithm(data, comb, False)
-        accuracy = evaluation(res, labels)
-        if accuracy > best_res:
-            best_res = accuracy
+        err = clustering_error(res, devices_number)
+        if err < best_err:
+            best_err = err
             best_params = comb
 
-    return best_res, best_params
+    return best_err, best_params

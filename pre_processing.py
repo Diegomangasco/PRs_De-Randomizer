@@ -142,9 +142,9 @@ class PreProcessing:
 
         self._features.to_csv(OUTPUT_DIRECTORY + file + ".csv", sep=",", float_format="%.4f", index=False)
 
-    def read_txt(self, file: str) -> None:
+    def read_csv(self, file: str) -> None:
         """
-        Function to read the 'packets.txt' file if present.
+        Function to read the .csv file if present.
         :return None
         """
         
@@ -156,4 +156,4 @@ class PreProcessing:
             while line:
                 self._devices_IDs.append(int(line))
                 line = txt_reader.readline()
-        self._total_devices = max(self._devices_IDs)
+        self._total_devices = max(self._devices_IDs) + 1
