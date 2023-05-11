@@ -26,9 +26,7 @@ def load_data(file_path: str, batch_size: int):
     validate_data = inputs[int(0.8*len(inputs)):][:]
     validate_labels = inputs[int(0.8*len(labels)):]
     train_data = torch.tensor(train_data, dtype=torch.float32)
-    train_labels = torch.tensor(train_labels, dtype=torch.float32)
     validate_data = torch.tensor(validate_data, dtype=torch.float32)
-    validate_labels = torch.tensor(validate_labels, dtype=torch.float32)
     train_dataset = CustomDataset(train_data, train_labels)
     validate_dataset = CustomDataset(validate_data, validate_labels)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)

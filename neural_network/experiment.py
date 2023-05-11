@@ -52,7 +52,6 @@ class Experiment:
     def train_iteration(self, data):
         x, device_label = data
         x = x.to(self.device)
-        device_label = device_label.to(self.device)
 
         res = self.model(x)
 
@@ -60,9 +59,9 @@ class Experiment:
         # loss_2 is computed for probes belonging to different devices
         loss_1 = 0
         loss_2 = 0
-        for i in range(device_label.shape[0]):
-            for j in range(device_label.shape[0]):
-                if torch.eq(device_label[i], device_label[j]).item():
+        for i in range(len(device_label)):
+            for j in range(len(device_label)):
+                if device_label[i] == device_label[j]:
                     loss_1 = loss_1 + self.criterion(res[i], x[j])
                 else:
                     loss_2 = loss_2 + self.criterion(res[i], x[j])
@@ -84,14 +83,13 @@ class Experiment:
         with torch.no_grad():
             for x, device_label in data:
                 x = x.to(self.device)
-                device_label = device_label.to(self.device)
-                total = device_label.size(dim=0)
+                total = len(device_label)
 
                 res = self.model(x, train=False)
 
-                for i in range(device_label.shape[0]):
-                    for j in range(device_label.shape[0]):
-                        if torch.eq(device_label[i], device_label[j]).item():
+                for i in range(len(device_label)):
+                    for j in range(len(device_label)):
+                        if device_label[i] == device_label[j]:
                             # Probes belong to the same device
                             if self.criterion(res[i], x[j]) < self.threshold:
                                 # Same device recognized
