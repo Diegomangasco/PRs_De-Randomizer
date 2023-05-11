@@ -4,7 +4,6 @@ import read_data as rd
 import torch
 
 
-
 class CustomDataset(Dataset):
     def __init__(self, inputs, labels):
         self.inputs = inputs
@@ -22,10 +21,10 @@ def load_data(file_path: str, batch_size: int):
     pre_processing.read_pcap(file_path)
     inputs = pre_processing.get_features().values
     labels = array(pre_processing.get_devices_IDs())
-    train_data = inputs[:0.8*len(inputs)]
-    train_labels = labels[:0.8*len(labels)]
-    validate_data = input[0.8*len(inputs):]
-    validate_labels = input[0.8*len(labels):]
+    train_data = inputs[:int(0.8*len(inputs))]
+    train_labels = labels[:int(0.8*len(labels))]
+    validate_data = input[int(0.8*len(inputs)):]
+    validate_labels = input[int(0.8*len(labels)):]
     train_data = torch.tensor(train_data, dtype=torch.float32)
     train_labels = torch.tensor(train_labels, dtype=torch.float32)
     validate_data = torch.tensor(validate_data, dtype=torch.float32)
