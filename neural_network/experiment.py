@@ -5,9 +5,9 @@ from model import *
 
 class Experiment:
 
-    # Hyper parameters: alpha, beta, threshold, hidden_size, learning_rate
+    # Hyper parameters: alpha, beta, threshold, hidden_size, output_size, learning_rate
 
-    def __init__(self, input_size, hidden_size, output_size, learning_rate, alpha, beta, threshold, device='cpu'):
+    def __init__(self, input_size, hidden_size, output_size, alpha, beta, threshold, learning_rate, device):
         self.device = torch.device(device)
 
         # Setup model
