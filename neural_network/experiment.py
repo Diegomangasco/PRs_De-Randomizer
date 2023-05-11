@@ -7,10 +7,11 @@ class Experiment:
 
     # Hyper parameters: alpha, beta, threshold, hidden_size, output_size, learning_rate
 
-    def __init__(self, input_size, hidden_size, output_size, alpha, beta, threshold, learning_rate, device):
+    def __init__(self, hidden_size, output_size, alpha, beta, threshold, learning_rate, device):
         self.device = torch.device(device)
 
         # Setup model
+        input_size = 329
         self.model = ProbeEncoderDecoder(input_size, hidden_size, output_size)
         self.model.train()
         self.model.to(self.device)

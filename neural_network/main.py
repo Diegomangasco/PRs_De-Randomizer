@@ -9,7 +9,7 @@ def parse_arguments():
 
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--output_path", type=str, default=".")
-    parser.add_argument("--input_path", type=str, default="./data")
+    parser.add_argument("--input_path", type=str, default="./input/out_file.pcap")
     parser.add_argument("--cpu", type=str, default="True")
     parser.add_argument("--test", type=str, default="True")
     parser.add_argument("--max_iterations", type=int, defaull=5000)
@@ -28,7 +28,17 @@ def parse_arguments():
 
 if __name__ == "__main__":
     options = parse_arguments()
-    experiment = Experiment()
+    experiment = Experiment(
+        options["hidden_size"],
+        options["output_size"],
+        options["alpha"],
+        options["beta"],
+        options["threshold"],
+        options["learning_rate"],
+        options["cpu"]
+    )
+
+    train_loader, validation_loader = load_data(options["input_path"], options["batch_size"])
 
     if options["test"] == "True":
         iterations = 0
@@ -69,9 +79,9 @@ if __name__ == "__main__":
                 if iterations > options["max_iterations"]:
                     break
 
-    experiment.load_checkpoint(f'{opt["output_path"]}/best_checkpoint.pth')
-    true_pos, true_neg, false_pos, false_neg = experiment.validate(test_loader)
-    logging.info(f'[TEST] True Positive: {true_pos:.2f}')
-    logging.info(f'[TEST] True Negative: {true_neg:.2f}')
-    logging.info(f'[TEST] False Positive: {false_pos:.2f}')
-    logging.info(f'[TEST] False Negative: {false_neg:.2f}')
+    # experiment.load_checkpoint(f'{opt["output_path"]}/best_checkpoint.pth')
+    # true_pos, true_neg, false_pos, false_neg = experiment.validate(test_loader)
+    # logging.info(f'[TEST] True Positive: {true_pos:.2f}')
+    # logging.info(f'[TEST] True Negative: {true_neg:.2f}')
+    # logging.info(f'[TEST] False Positive: {false_pos:.2f}')
+    # logging.info(f'[TEST] False Negative: {false_neg:.2f}')
