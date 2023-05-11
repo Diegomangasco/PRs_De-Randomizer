@@ -12,7 +12,7 @@ def parse_arguments():
     parser.add_argument("--input_path", type=str, default="./input/out_file.pcap")
     parser.add_argument("--cpu", type=str, default="True")
     parser.add_argument("--test", type=str, default="True")
-    parser.add_argument("--max_iterations", type=int, defaull=5000)
+    parser.add_argument("--max_iterations", type=int, default=5000)
     parser.add_argument("--learning_rate", type=float, default=1e-4)
     parser.add_argument("--alpha", type=float, default=1.0)
     parser.add_argument("--beta", type=float, default=1.0)
