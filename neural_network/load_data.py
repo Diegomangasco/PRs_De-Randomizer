@@ -26,6 +26,7 @@ def load_data(file_path: str, batch_size: int):
     validate_data = inputs[int(0.8*len(inputs)):]
     validate_labels = inputs[int(0.8*len(labels)):]
     train_data = torch.tensor(train_data, dtype=torch.float32)
+    print(train_data.size)
     train_labels = torch.tensor(train_labels, dtype=torch.float32)
     validate_data = torch.tensor(validate_data, dtype=torch.float32)
     validate_labels = torch.tensor(validate_labels, dtype=torch.float32)
