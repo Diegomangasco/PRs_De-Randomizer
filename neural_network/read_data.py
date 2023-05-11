@@ -8,7 +8,6 @@ import pandas as pd
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import PCA
 
-INPUT_DIRECTORY = "./input_files/"
 OUTPUT_DIRECTORY = "./features_files/"
 CUT_INDEX = 20  # Derived from the theorem
 
@@ -58,7 +57,7 @@ class PreProcessing:
 
         # Read the device IDs from the .txt file
         self._devices_IDs = list()
-        with open(INPUT_DIRECTORY + file + ".txt", "r") as txt_reader:
+        with open(file + ".txt", "r") as txt_reader:
             line = txt_reader.readline()
             while line:
                 self._devices_IDs.append(int(line))
@@ -66,7 +65,7 @@ class PreProcessing:
         self._total_devices = max(self._devices_IDs)
 
         # Read from file using pyshark
-        pyshark_packets = pyshark.FileCapture(INPUT_DIRECTORY + file + ".pcap")
+        pyshark_packets = pyshark.FileCapture(file + ".pcap")
 
         fields = set()
         features = dict()

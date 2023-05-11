@@ -9,7 +9,7 @@ def parse_arguments():
 
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--output_path", type=str, default=".")
-    parser.add_argument("--input_path", type=str, default="./input/out_file.pcap")
+    parser.add_argument("--input_path", type=str, default="./input/out_file")
     parser.add_argument("--cpu", type=str, default="True")
     parser.add_argument("--test", type=str, default="True")
     parser.add_argument("--max_iterations", type=int, default=5000)
