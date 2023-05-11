@@ -135,9 +135,9 @@ class PreProcessing:
 
         # DATASET STORAGE
 
-        logging.info("Saving features inside .csv file")
-
-        self._features.to_csv(OUTPUT_DIRECTORY + file + ".csv", sep=",", float_format="%.4f", index=False)
+        # logging.info("Saving features inside .csv file")
+        #
+        # self._features.to_csv(OUTPUT_DIRECTORY + file + ".csv", sep=",", float_format="%.4f", index=False)
 
     def read_csv(self, file: str) -> None:
         """
