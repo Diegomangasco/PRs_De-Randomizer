@@ -19,14 +19,13 @@ class CustomDataset(Dataset):
 def load_data(file_path: str, batch_size: int):
     pre_processing = rd.PreProcessing()
     pre_processing.read_pcap(file_path)
-    inputs = pre_processing.get_features().values
+    inputs = pre_processing.get_features().to_numpy()
     labels = array(pre_processing.get_devices_IDs())
-    train_data = inputs[:int(0.8*len(inputs))]
+    train_data = inputs[:int(0.8*len(inputs))][:]
     train_labels = labels[:int(0.8*len(labels))]
-    validate_data = inputs[int(0.8*len(inputs)):]
+    validate_data = inputs[int(0.8*len(inputs)):][:]
     validate_labels = inputs[int(0.8*len(labels)):]
     train_data = torch.tensor(train_data, dtype=torch.float32)
-    print(train_data.size)
     train_labels = torch.tensor(train_labels, dtype=torch.float32)
     validate_data = torch.tensor(validate_data, dtype=torch.float32)
     validate_labels = torch.tensor(validate_labels, dtype=torch.float32)
