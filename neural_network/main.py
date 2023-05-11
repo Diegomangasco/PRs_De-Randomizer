@@ -17,8 +17,8 @@ def parse_arguments():
     parser.add_argument("--alpha", type=float, default=1.0)
     parser.add_argument("--beta", type=float, default=1.0)
     parser.add_argument("--threshold", type=float, default=0.5)
-    parser.add_argument("--hidden_size", type=float, default=40.0)
-    parser.add_argument("--output_size", type=float, default=10.0)
+    parser.add_argument("--hidden_size", type=int, default=40)
+    parser.add_argument("--output_size", type=int, default=10)
     parser.add_argument("--validate_every", type=int, default=100)
 
     options = vars(parser.parse_args())
