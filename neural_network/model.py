@@ -8,30 +8,30 @@ class ProbeEncoderDecoder(nn.Module):
         super(ProbeEncoderDecoder, self).__init__()
         self.encoder = nn.Sequential(
             nn.Linear(input_size, hidden_size),
-            nn.LayerNorm(hidden_size),
-            nn.ReLU(),
+            nn.BatchNorm1d(hidden_size),
+            nn.Tanh(),
 
             nn.Linear(hidden_size, hidden_size),
-            nn.LayerNorm(hidden_size),
-            nn.ReLU(),
+            nn.BatchNorm1d(hidden_size),
+            nn.Tanh(),
 
             nn.Linear(hidden_size, output_size),
-            nn.LayerNorm(output_size),
-            nn.ReLU(),
+            nn.BatchNorm1d(output_size),
+            nn.Tanh()
 
         )
         self.decoder = nn.Sequential(
             nn.Linear(output_size, hidden_size),
-            nn.LayerNorm(hidden_size),
-            nn.ReLU(),
+            nn.BatchNorm1d(hidden_size),
+            nn.Tanh(),
 
             nn.Linear(hidden_size, hidden_size),
-            nn.LayerNorm(hidden_size),
-            nn.ReLU(),
+            nn.BatchNorm1d(hidden_size),
+            nn.Tanh(),
 
             nn.Linear(hidden_size, input_size),
-            nn.LayerNorm(input_size),
-            nn.ReLU(),
+            nn.BatchNorm1d(input_size),
+            nn.Linear(input_size, input_size),
         )
 
     def forward(self, x, train=True):
