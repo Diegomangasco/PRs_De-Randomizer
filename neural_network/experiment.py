@@ -8,7 +8,7 @@ class Experiment:
     # Hyper parameters: alpha, beta, threshold, hidden_size, output_size, learning_rate
 
     def __init__(self, hidden_size, output_size, alpha, beta, threshold, learning_rate, device):
-        self.device = torch.device(device)
+        self.device = torch.device("cpu" if device else "cuda:0")
 
         # Setup model
         input_size = 329
