@@ -62,7 +62,7 @@ class Experiment:
         loss_2 = 0
         for i in range(device_label.shape[0]):
             for j in range(device_label.shape[0]):
-                if device_label[i] == device_label[j]:
+                if torch.eq(device_label[i] == device_label[j]).item():
                     loss_1 = loss_1 + self.criterion(res[i], x[j])
                 else:
                     loss_2 = loss_2 + self.criterion(res[i], x[j])
@@ -91,7 +91,7 @@ class Experiment:
 
                 for i in range(device_label.shape[0]):
                     for j in range(device_label.shape[0]):
-                        if device_label[i] == device_label[j]:
+                        if torch.eq(device_label[i] == device_label[j]).item():
                             # Probes belong to the same device
                             if self.criterion(res[i], x[j]) < self.threshold:
                                 # Same device recognized
