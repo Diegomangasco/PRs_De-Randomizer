@@ -11,7 +11,7 @@ class Experiment:
         self.device = torch.device("cpu" if device else "cuda:0")
 
         # Setup model
-        input_size = 329
+        input_size = 309
         self.model = ProbeEncoderDecoder(input_size, hidden_size, output_size)
         self.model.train()
         self.model.to(self.device)
