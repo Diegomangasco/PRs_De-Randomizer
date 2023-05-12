@@ -51,9 +51,8 @@ class Experiment:
 
     def train_iteration(self, data):
         x, device_label = data
-        print(type(device_label))
         x = x.to(self.device)
-
+        device_label = device_label.numpy()
         res = self.model(x)
 
         # loss_1 is computed for probes belonging to the same device
@@ -83,8 +82,8 @@ class Experiment:
         true_negative = 0
         with torch.no_grad():
             for x, device_label in data:
-                print(type(device_label))
                 x = x.to(self.device)
+                device_label = device_label.numpy()
                 total = len(device_label)
 
                 res = self.model(x, train=False)
