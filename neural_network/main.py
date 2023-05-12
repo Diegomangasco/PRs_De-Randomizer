@@ -53,13 +53,14 @@ if __name__ == "__main__":
 
                 if iterations % options["validate_every"] == 0:
 
-                    logging.info(f"Validation at iterations {iterations}")
-
                     true_pos, true_neg, false_pos, false_neg = experiment.validate(validation_loader)
 
                     if true_pos + true_neg > best_recognition:
-                        logging.info(f'[VALIDATE] True Positive: {true_pos:.2f}')
-                        logging.info(f'[VALIDATE] True Negative: {true_neg:.2f}')
+                        logging.info(f"[VALIDATE] at iterations {iterations}")
+                        logging.info(f'True Positive: {true_pos:.2f}')
+                        logging.info(f'True Negative: {true_neg:.2f}')
+                        logging.info(f'False Positive: {false_pos:.2f}')
+                        logging.info(f'False Negative: {false_neg:.2f}')
                         best_recognition = true_pos + true_neg
                         experiment.save_checkpoint(
                             f'{options["output_path"]}/best_checkpoint.pth',

@@ -85,6 +85,7 @@ class Experiment:
             for x, device_label in data:
                 x = x.to(self.device)
                 device_label = device_label.numpy()
+                print(len(device_label), device_label.shape)
                 total_devices += len(device_label)
 
                 res = self.model(x)
