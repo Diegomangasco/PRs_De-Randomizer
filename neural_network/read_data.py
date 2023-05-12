@@ -99,6 +99,8 @@ class PreProcessing:
 
         logging.info("Building features matrix")
 
+        # TODO add to features the sniff time of each packet
+
         max_length = 0
         for k in fields:
             if len(features[k]) > max_length:
@@ -126,12 +128,12 @@ class PreProcessing:
         self._features = pd.DataFrame(features, columns=list(fields))
 
         # FEATURES SCALING
-
-        logging.info("Z-score normalization")
-
-        for column in self._features.columns:
-            std = 1.0 if self._features[column].std() == 0.0 else self._features[column].std()
-            self._features[column] = (self._features[column] - self._features[column].mean()) / std
+        #
+        # logging.info("Z-score normalization")
+        #
+        # for column in self._features.columns:
+        #     std = 1.0 if self._features[column].std() == 0.0 else self._features[column].std()
+        #     self._features[column] = (self._features[column] - self._features[column].mean()) / std
 
         # DATASET STORAGE
 
