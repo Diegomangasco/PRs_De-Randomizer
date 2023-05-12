@@ -47,7 +47,8 @@ if __name__ == "__main__":
 
         iterations = 0
         total_train_loss = 0
-        best_recognition = 0
+        best_TP = 0
+        best_TN = 0
 
         while iterations < options["max_iterations"]:
 
@@ -62,24 +63,39 @@ if __name__ == "__main__":
 
                     true_pos, true_neg, false_pos, false_neg = experiment.validate(validation_loader)
 
-                    if true_pos + true_neg > best_recognition:
-                        logging.info(f"[VALIDATE] at iterations {iterations}")
-                        logging.info(f'True Positive: {true_pos:.2f}')
-                        logging.info(f'True Negative: {true_neg:.2f}')
-                        logging.info(f'False Positive: {false_pos:.2f}')
-                        logging.info(f'False Negative: {false_neg:.2f}')
-                        best_recognition = true_pos + true_neg
+                    logging.info(f"[VALIDATE] at iterations {iterations}")
+                    logging.info(f'True Positive: {true_pos:.2f}')
+                    logging.info(f'True Negative: {true_neg:.2f}')
+                    logging.info(f'False Positive: {false_pos:.2f}')
+                    logging.info(f'False Negative: {false_neg:.2f}')
+
+                    if true_pos > best_TP:
+                        logging.info("Saving checkpoint")
+                        best_TP = true_pos
                         experiment.save_checkpoint(
                             f'{options["output_path"]}/best_checkpoint.pth',
                             iterations,
-                            best_recognition,
+                            best_TP,
+                            best_TN,
+                            total_train_loss
+                        )
+
+                    if true_neg > best_TN:
+                        logging.info("Saving checkpoint")
+                        best_TN = true_neg
+                        experiment.save_checkpoint(
+                            f'{options["output_path"]}/best_checkpoint.pth',
+                            iterations,
+                            best_TP,
+                            best_TN,
                             total_train_loss
                         )
 
                     experiment.save_checkpoint(
                         f'{options["output_path"]}/last_checkpoint.pth',
                         iterations,
-                        best_recognition,
+                        best_TP,
+                        best_TN,
                         total_train_loss
                     )
 

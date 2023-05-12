@@ -26,11 +26,12 @@ class Experiment:
         self.beta = beta
         self.threshold = threshold
 
-    def save_checkpoint(self, path, iteration, best_accuracy, total_train_loss):
+    def save_checkpoint(self, path, iteration, best_TP, best_TN, total_train_loss):
         checkpoint = dict()
 
         checkpoint['iteration'] = iteration
-        checkpoint['best_accuracy'] = best_accuracy
+        checkpoint['best_TP'] = best_TP
+        checkpoint['best_TN'] = best_TN
         checkpoint['total_train_loss'] = total_train_loss
         checkpoint['model'] = self.model.state_dict()
         checkpoint['optimizer'] = self.optimizer.state_dict()
