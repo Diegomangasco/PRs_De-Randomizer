@@ -49,7 +49,7 @@ class Experiment:
 
         return iteration, best_accuracy, total_train_loss
 
-    def train_iteration(self, data):
+    def train(self, data):
         x, device_label = data
         x = x.to(self.device)
         device_label = device_label.numpy()
@@ -86,7 +86,7 @@ class Experiment:
                 device_label = device_label.numpy()
                 total = len(device_label)
 
-                res = self.model(x, train=False)
+                res = self.model(x)
 
                 for i in range(len(device_label)):
                     for j in range(len(device_label)):
@@ -114,3 +114,6 @@ class Experiment:
         self.model.train()
 
         return TP_ratio, TN_ratio, FP_ratio, FN_ratio
+
+    def test(self):
+        pass

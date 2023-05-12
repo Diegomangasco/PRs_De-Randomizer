@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
             for data in train_loader:
 
-                total_train_loss += experiment.train_iteration(data)
+                total_train_loss += experiment.train(data)
 
                 if iterations % options["validate_every"] == 0:
 
