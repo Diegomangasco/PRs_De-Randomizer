@@ -30,5 +30,5 @@ def load_data(file_path: str, batch_size: int):
     train_dataset = CustomDataset(train_data, train_labels)
     validate_dataset = CustomDataset(validate_data, validate_labels)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    validate_dataloader = DataLoader(validate_dataset, batch_size=batch_size, shuffle=True)
-    return train_dataloader, validate_dataloader
+    validation_dataloader = DataLoader(validate_dataset, batch_size=batch_size, shuffle=True)
+    return train_dataloader, validation_dataloader
