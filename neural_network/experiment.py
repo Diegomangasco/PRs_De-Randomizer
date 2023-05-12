@@ -80,11 +80,12 @@ class Experiment:
         true_positive = 0
         false_negative = 0
         true_negative = 0
+        total_devices = 0
         with torch.no_grad():
             for x, device_label in data:
                 x = x.to(self.device)
                 device_label = device_label.numpy()
-                total = len(device_label)
+                total_devices += len(device_label)
 
                 res = self.model(x)
 
@@ -107,10 +108,10 @@ class Experiment:
                                 # Different devices not recognized
                                 false_positive += 1
 
-        TP_ratio = 100 * (true_positive / total)
-        TN_ratio = 100 * (true_negative / total)
-        FP_ratio = 100 * (false_positive / total)
-        FN_ratio = 100 * (false_negative / total)
+        TP_ratio = 100 * (true_positive / total_devices)
+        TN_ratio = 100 * (true_negative / total_devices)
+        FP_ratio = 100 * (false_positive / total_devices)
+        FN_ratio = 100 * (false_negative / total_devices)
         self.model.train()
 
         return TP_ratio, TN_ratio, FP_ratio, FN_ratio
