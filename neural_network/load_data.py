@@ -2,6 +2,7 @@ from numpy import array
 from torch.utils.data import Dataset, DataLoader
 import read_data as rd
 import torch
+import logging
 
 
 class CustomDataset(Dataset):
@@ -19,6 +20,7 @@ class CustomDataset(Dataset):
 def load_data(file_path: str, batch_size: int):
     pre_processing = rd.PreProcessing()
     pre_processing.read_pcap(file_path)
+    logging.info("Creating data loaders")
     inputs = pre_processing.get_features().to_numpy()
     labels = array(pre_processing.get_devices_IDs())
     train_data = inputs[:int(0.8*len(inputs))][:]

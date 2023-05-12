@@ -11,7 +11,7 @@ def parse_arguments():
     parser.add_argument("--output_path", type=str, default=".")
     parser.add_argument("--input_path", type=str, default="./input/out_file")
     parser.add_argument("--cpu", type=str, default="True")
-    parser.add_argument("--test", type=str, default="True")
+    parser.add_argument("--train", type=str, default="True")
     parser.add_argument("--max_iterations", type=int, default=5000)
     parser.add_argument("--learning_rate", type=float, default=1e-4)
     parser.add_argument("--alpha", type=float, default=1.0)
@@ -20,6 +20,7 @@ def parse_arguments():
     parser.add_argument("--hidden_size", type=int, default=40)
     parser.add_argument("--output_size", type=int, default=10)
     parser.add_argument("--validate_every", type=int, default=100)
+    parser.add_argument("--print_every", type=int, default=50)
 
     options = vars(parser.parse_args())
 
@@ -40,7 +41,10 @@ if __name__ == "__main__":
 
     train_loader, validation_loader = load_data(options["input_path"], options["batch_size"])
 
-    if options["test"] == "True":
+    if options["train"] == "True":
+
+        logging.info("Starting train iterations")
+
         iterations = 0
         total_train_loss = 0
         best_recognition = 0
@@ -48,6 +52,9 @@ if __name__ == "__main__":
         while iterations < options["max_iterations"]:
 
             for data in train_loader:
+
+                if iterations % options["print_every"] == 0:
+                    logging.info(f"[ITERATION]: {iterations}")
 
                 total_train_loss += experiment.train(data)
 
