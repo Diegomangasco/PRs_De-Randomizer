@@ -113,8 +113,8 @@ class Experiment:
 
         TP_ratio = 100 * (true_positive / total_positive)
         TN_ratio = 100 * (true_negative / total_negative)
-        FP_ratio = 100 * (false_positive / total_positive)
-        FN_ratio = 100 * (false_negative / total_negative)
+        FP_ratio = 100 * (false_positive / total_negative)
+        FN_ratio = 100 * (false_negative / total_positive)
         self.model.train()
 
         return TP_ratio, TN_ratio, FP_ratio, FN_ratio
