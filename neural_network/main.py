@@ -61,13 +61,13 @@ if __name__ == "__main__":
 
                 if iterations % options["validate_every"] == 0:
 
-                    true_pos, true_neg, false_pos, false_neg = experiment.validate(validation_loader)
+                    true_pos, false_neg, true_neg, false_pos = experiment.validate(validation_loader)
 
                     logging.info(f"[VALIDATE] at iterations {iterations}")
                     logging.info(f'Probes belonging to the same device => True Positive: {true_pos:.2f}, '
-                                 f'False Positive: {false_pos:.2f}')
-                    logging.info(f'Probes belonging to different devices => True Negative: {true_neg:.2f}, '
                                  f'False Negative: {false_neg:.2f}')
+                    logging.info(f'Probes belonging to different devices => True Negative: {true_neg:.2f}, '
+                                 f'False Positive: {false_pos:.2f}')
 
                     if true_pos > best_TP:
                         logging.info("Saving checkpoint")
