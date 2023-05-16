@@ -83,6 +83,10 @@ class Experiment:
         true_negative = 0
         total_positive = 0
         total_negative = 0
+        TP_ratio = 0
+        TN_ratio = 0
+        FP_ratio = 0
+        FN_ratio = 0
         with torch.no_grad():
             for x, device_label in data:
                 x = x.to(self.device)
@@ -110,11 +114,21 @@ class Experiment:
                             else:
                                 # Different devices not recognized
                                 false_positive += 1
+                    TP_ratio += 100 * (true_positive / total_positive)
+                    TN_ratio += 100 * (true_negative / total_negative)
+                    FP_ratio += 100 * (false_positive / total_negative)
+                    FN_ratio += 100 * (false_negative / total_positive)
+                    total_negative = 0
+                    total_positive = 0
+                    true_positive = 0
+                    true_negative = 0
+                    false_negative = 0
+                    false_positive = 0
 
-        TP_ratio = 100 * (true_positive / total_positive)
-        TN_ratio = 100 * (true_negative / total_negative)
-        FP_ratio = 100 * (false_positive / total_negative)
-        FN_ratio = 100 * (false_negative / total_positive)
+        TP_ratio = TP_ratio / len(device_label)
+        TN_ratio = TN_ratio / len(device_label)
+        FP_ratio = FP_ratio / len(device_label)
+        FN_ratio = FN_ratio / len(device_label)
         self.model.train()
 
         return TP_ratio, TN_ratio, FP_ratio, FN_ratio
