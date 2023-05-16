@@ -9,25 +9,25 @@ class ProbeEncoderDecoder(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(input_size, hidden_size),
             nn.BatchNorm1d(hidden_size),
-            nn.Tanh(),
+            nn.ReLU(),
 
             nn.Linear(hidden_size, hidden_size),
             nn.BatchNorm1d(hidden_size),
-            nn.Tanh(),
+            nn.ReLU(),
 
             nn.Linear(hidden_size, output_size),
             nn.BatchNorm1d(output_size),
-            nn.Tanh()
+            nn.ReLU()
 
         )
         self.decoder = nn.Sequential(
             nn.Linear(output_size, hidden_size),
             nn.BatchNorm1d(hidden_size),
-            nn.Tanh(),
+            nn.ReLU(),
 
             nn.Linear(hidden_size, hidden_size),
             nn.BatchNorm1d(hidden_size),
-            nn.Tanh(),
+            nn.ReLU(),
 
             nn.Linear(hidden_size, input_size),
             nn.BatchNorm1d(input_size),

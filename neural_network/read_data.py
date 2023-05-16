@@ -1,4 +1,5 @@
 #  Copyright (c) 2023 Diego Gasco (diego.gasco99@gmail.com), Diegomangasco on GitHub
+import datetime
 
 import pyshark
 import logging
@@ -74,6 +75,8 @@ class PreProcessing:
 
         logging.info("Parsing .pcap file")
 
+        start_time = None
+
         # Parse every probe request
         for pkt in pyshark_packets:
             for i in range(len(pkt.layers)):
@@ -94,12 +97,13 @@ class PreProcessing:
                         fields.add(k)
                         features[k] = list()
                         features[k].append(value)
+            if not start_time:
+                start_time = datetime.datetime.timestamp(pkt.sniff_time)
+            features["time"] = datetime.datetime.timestamp(pkt.sniff_time) - start_time
 
         # BUILD FEATURES MATRIX
 
         logging.info("Building features matrix")
-
-        # TODO add to features the sniff time of each packet
 
         max_length = 0
         for k in fields:
@@ -116,7 +120,7 @@ class PreProcessing:
 
         # MISSING VALUES
 
-        logging.info("Filling missing fields")
+        logging.info("Filling missing fields with mean strategy")
 
         mean_imputer = SimpleImputer(missing_values=np.nan, strategy="mean")  # Strategy can change
         features = mean_imputer.fit_transform(features)
@@ -128,12 +132,12 @@ class PreProcessing:
         self._features = pd.DataFrame(features, columns=list(fields))
 
         # FEATURES SCALING
-        #
-        # logging.info("Z-score normalization")
-        #
-        # for column in self._features.columns:
-        #     std = 1.0 if self._features[column].std() == 0.0 else self._features[column].std()
-        #     self._features[column] = (self._features[column] - self._features[column].mean()) / std
+
+        logging.info("Z-score normalization")
+
+        for column in self._features.columns:
+            std = 1.0 if self._features[column].std() == 0.0 else self._features[column].std()
+            self._features[column] = (self._features[column] - self._features[column].mean()) / std
 
         # DATASET STORAGE
 
