@@ -99,6 +99,7 @@ class PreProcessing:
                         features[k].append(value)
             if not start_time:
                 start_time = datetime.datetime.timestamp(pkt.sniff_time)
+                features["time"] = list()
             features["time"].append(datetime.datetime.timestamp(pkt.sniff_time) - start_time)
 
         # BUILD FEATURES MATRIX
