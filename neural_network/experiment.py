@@ -81,12 +81,12 @@ class Experiment:
         true_positive = 0
         false_negative = 0
         true_negative = 0
-        total_devices = 0
+        total_positive = 0
+        total_negative = 0
         with torch.no_grad():
             for x, device_label in data:
                 x = x.to(self.device)
                 device_label = device_label.numpy()
-                total_devices += len(device_label)**2
 
                 res = self.model(x)
 
@@ -94,6 +94,7 @@ class Experiment:
                     for j in range(len(device_label)):
                         if device_label[i] == device_label[j]:
                             # Probes belong to the same device
+                            total_positive += 1
                             if self.criterion(res[i], x[j]) < self.threshold:
                                 # Same device recognized
                                 true_positive += 1
@@ -102,6 +103,7 @@ class Experiment:
                                 false_negative += 1
                         else:
                             # Probes don't belong to the same device
+                            total_negative += 1
                             if self.criterion(res[i], x[j]) > self.threshold:
                                 # Different devices recognized:
                                 true_negative += 1
@@ -109,10 +111,10 @@ class Experiment:
                                 # Different devices not recognized
                                 false_positive += 1
 
-        TP_ratio = 100 * (true_positive / total_devices)
-        TN_ratio = 100 * (true_negative / total_devices)
-        FP_ratio = 100 * (false_positive / total_devices)
-        FN_ratio = 100 * (false_negative / total_devices)
+        TP_ratio = 100 * (true_positive / total_positive)
+        TN_ratio = 100 * (true_negative / total_negative)
+        FP_ratio = 100 * (false_positive / total_positive)
+        FN_ratio = 100 * (false_negative / total_negative)
         self.model.train()
 
         return TP_ratio, TN_ratio, FP_ratio, FN_ratio
