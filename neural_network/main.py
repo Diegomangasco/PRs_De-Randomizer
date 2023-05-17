@@ -12,15 +12,15 @@ def parse_arguments():
     parser.add_argument("--input_path", type=str, default="./input/out_file")
     parser.add_argument("--cpu", type=str, default="True")
     parser.add_argument("--train", type=str, default="True")
-    parser.add_argument("--max_iterations", type=int, default=5000)
+    parser.add_argument("--max_iterations", type=int, default=1000)
     parser.add_argument("--learning_rate", type=float, default=1e-4)
     parser.add_argument("--alpha", type=float, default=1.0)
     parser.add_argument("--beta", type=float, default=1.0)
-    parser.add_argument("--threshold", type=float, default=0.5)
+    parser.add_argument("--threshold", type=float, default=0.25)
     parser.add_argument("--hidden_size", type=int, default=150)
     parser.add_argument("--output_size", type=int, default=50)
-    parser.add_argument("--validate_every", type=int, default=100)
-    parser.add_argument("--print_every", type=int, default=50)
+    parser.add_argument("--validate_every", type=int, default=50)
+    parser.add_argument("--print_every", type=int, default=30)
 
     options = vars(parser.parse_args())
 
@@ -47,8 +47,7 @@ if __name__ == "__main__":
 
         iterations = 0
         total_train_loss = 0
-        best_TP = 0
-        best_TN = 0
+        best_result = 0
 
         while iterations < options["max_iterations"]:
 
@@ -69,33 +68,20 @@ if __name__ == "__main__":
                     logging.info(f'Probes belonging to different devices => True Negative: {true_neg:.2f}, '
                                  f'False Positive: {false_pos:.2f}')
 
-                    if true_pos > best_TP:
+                    if true_pos + true_neg > best_result:
                         logging.info("Saving checkpoint")
-                        best_TP = true_pos
+                        best_result = true_pos + true_neg
                         experiment.save_checkpoint(
                             f'{options["output_path"]}/best_checkpoint.pth',
                             iterations,
-                            best_TP,
-                            best_TN,
-                            total_train_loss
-                        )
-
-                    if true_neg > best_TN:
-                        logging.info("Saving checkpoint")
-                        best_TN = true_neg
-                        experiment.save_checkpoint(
-                            f'{options["output_path"]}/best_checkpoint.pth',
-                            iterations,
-                            best_TP,
-                            best_TN,
+                            best_result,
                             total_train_loss
                         )
 
                     experiment.save_checkpoint(
                         f'{options["output_path"]}/last_checkpoint.pth',
                         iterations,
-                        best_TP,
-                        best_TN,
+                        best_result,
                         total_train_loss
                     )
 

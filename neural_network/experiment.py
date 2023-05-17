@@ -26,29 +26,28 @@ class Experiment:
         self.beta = beta
         self.threshold = threshold
 
-    def save_checkpoint(self, path, iteration, best_TP, best_TN, total_train_loss):
+    def save_checkpoint(self, path, iteration, best_result, total_train_loss):
         checkpoint = dict()
 
-        checkpoint['iteration'] = iteration
-        checkpoint['best_TP'] = best_TP
-        checkpoint['best_TN'] = best_TN
-        checkpoint['total_train_loss'] = total_train_loss
-        checkpoint['model'] = self.model.state_dict()
-        checkpoint['optimizer'] = self.optimizer.state_dict()
+        checkpoint["iteration"] = iteration
+        checkpoint["best_result"] = best_result
+        checkpoint["total_train_loss"] = total_train_loss
+        checkpoint["model"] = self.model.state_dict()
+        checkpoint["optimizer"] = self.optimizer.state_dict()
 
         torch.save(checkpoint, path)
 
     def load_checkpoint(self, path):
         checkpoint = torch.load(path)
 
-        iteration = checkpoint['iteration']
-        best_accuracy = checkpoint['best_accuracy']
-        total_train_loss = checkpoint['total_train_loss']
+        iteration = checkpoint["iteration"]
+        best_result = checkpoint["best_result"]
+        total_train_loss = checkpoint["total_train_loss"]
 
-        self.model.load_state_dict(checkpoint['model'])
-        self.optimizer.load_state_dict(checkpoint['optimizer'])
+        self.model.load_state_dict(checkpoint["model"])
+        self.optimizer.load_state_dict(checkpoint["optimizer"])
 
-        return iteration, best_accuracy, total_train_loss
+        return iteration, best_result, total_train_loss
 
     def train(self, data):
         x, device_label = data
@@ -66,10 +65,10 @@ class Experiment:
             for j in range(len(device_label)):
                 if device_label[i] == device_label[j]:
                     total_positive_pairs += 1
-                    loss_1 = loss_1 + self.criterion(res[i], x[j])
+                    loss_1 = loss_1 + self.criterion(res[i], res[j])
                 else:
                     total_negative_pairs += 1
-                    loss_2 = loss_2 + self.criterion(res[i], x[j])
+                    loss_2 = loss_2 + self.criterion(res[i], res[j])
 
         # loss_1 is a normal loss, loss_2 is an adversarial loss
         loss_1 /= total_positive_pairs
@@ -105,7 +104,7 @@ class Experiment:
                         if device_label[i] == device_label[j]:
                             # Probes belong to the same device
                             total_positive += 1
-                            if self.criterion(res[i], x[j]) < self.threshold:
+                            if self.criterion(res[i], res[j]) < self.threshold:
                                 # Same device recognized
                                 true_positive += 1
                             else:
@@ -114,7 +113,7 @@ class Experiment:
                         else:
                             # Probes don't belong to the same device
                             total_negative += 1
-                            if self.criterion(res[i], x[j]) > self.threshold:
+                            if self.criterion(res[i], res[j]) > self.threshold:
                                 # Different devices recognized:
                                 true_negative += 1
                             else:
