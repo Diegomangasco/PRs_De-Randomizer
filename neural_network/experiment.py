@@ -60,14 +60,20 @@ class Experiment:
         # loss_2 is computed for probes belonging to different devices
         loss_1 = 0
         loss_2 = 0
+        total_positive_pairs = 0
+        total_negative_pairs = 0
         for i in range(len(device_label)):
             for j in range(len(device_label)):
                 if device_label[i] == device_label[j]:
+                    total_positive_pairs += 1
                     loss_1 = loss_1 + self.criterion(res[i], x[j])
                 else:
+                    total_negative_pairs += 1
                     loss_2 = loss_2 + self.criterion(res[i], x[j])
 
         # loss_1 is a normal loss, loss_2 is an adversarial loss
+        loss_1 /= total_positive_pairs
+        loss_2 /= total_negative_pairs
         total_loss = self.alpha*loss_1 - self.beta*loss_2
 
         self.optimizer.zero_grad()
