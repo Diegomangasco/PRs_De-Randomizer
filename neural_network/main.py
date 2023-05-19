@@ -3,6 +3,16 @@ import logging
 from load_data import *
 from experiment import *
 
+'''
+HYPERPARAMETERS
+max_iterations: between 100 and 7000 (step of 100 => 700 values), 
+alpha: between 0.1 and 50 (step 0.1 => 500 values), 
+beta: between 0.1 and 50 (step 0.1 => 500 values), 
+threshold: between 0.1 and 3.0 (step 0.1 => 30 values), 
+hidden_size: possible values (310, 300, 250, 200, 150, 100, 50, 25, 10), 
+output_size: possible values (310, 300, 250, 200, 150, 100, 50, 25, 10) (must be <= hidden_size)
+'''
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
