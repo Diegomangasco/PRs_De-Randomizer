@@ -134,5 +134,6 @@ class Experiment:
 
         return mean(TP_ratio), mean(FN_ratio), mean(TN_ratio), mean(FP_ratio)
 
-    def test(self):
+    def test(self, data):
+        # TODO divide probes in clusters and count the number of clusters, return the number of devices present and the number of clusters created
         pass

@@ -2,9 +2,9 @@
 
 # ITERATIONS
 
-start=100    # Starting value
+start=500    # Starting value
 end=7000     # Ending value
-step=100     # Step size
+step=500     # Step size
 
 # Generate the sequence and store it in an array
 max_iterations=()
@@ -14,24 +14,16 @@ done
 
 # ALPHA
 
-start=0.1    # Starting value
-end=50.0       # Ending value
-step=0.1     # Step size
-
-# Generate the sequence and store it in an array
-alpha=()
-for ((i=start; i<=end; i+=step)); do
-  alpha+=($i)
-done
+alpha = (0.001 0.01 0.1 1 10 100 1000)
 
 # BETA
 
-beta=("${alpha[@]}")
+beta=(0.001 0.01 0.1 1 10 100 1000)
 
 # THRESHOLD
 
-start=0.1    # Starting value
-end=3.0       # Ending value
+start=0.5    # Starting value
+end=2.5       # Ending value
 step=0.1     # Step size
 
 # Generate the sequence and store it in an array
@@ -58,7 +50,7 @@ for iter in "${max_iterations[@]}"; do
                 for hidden in "${hidden_size[@]}"; do
                     for output in "${output_size[@]}"; do
                         if ((output <= hidden)); then
-                            python3 main.py --max_iterations $iter --alpha $a --beta $b --threshold $th --hidden_size $hidden --output_size $output
+                            python3 main.py --validate_at_the_end "True" --max_iterations $iter --alpha $a --beta $b --threshold $th --hidden_size $hidden --output_size $output
                         fi
                     done
                 done
