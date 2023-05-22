@@ -122,7 +122,7 @@ if __name__ == "__main__":
             tp = list()
             tn = list()
             with open("stats.txt", "a") as fp:
-                line = fp.readline()[:-1]
+                line = fp.readline().replace("\n", "")
                 while line:
                     el = line.split(" ")
                     iter.append(int(el[0]))
