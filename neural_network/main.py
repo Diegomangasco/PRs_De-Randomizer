@@ -48,6 +48,9 @@ def parse_arguments():
 
 
 if __name__ == "__main__":
+
+    start_time = datetime.datetime.now()
+
     options = parse_arguments()
     experiment = Experiment(
         options["hidden_size"],
@@ -64,8 +67,6 @@ if __name__ == "__main__":
     if options["train"] == "True":
 
         logging.info("Starting train iterations")
-
-        start_time = datetime.datetime.now()
 
         iterations = 0
         total_train_loss = 0
@@ -122,13 +123,14 @@ if __name__ == "__main__":
             tp = list()
             tn = list()
             with open("stats.txt", "a") as fp:
-                line = fp.readline().replace("\n", "")
+                line = fp.readline()
                 while line:
+                    line = line[:-1]
                     el = line.split(" ")
                     iter.append(int(el[0]))
                     tp.append(float(el[1]))
                     tn.append(float(el[2]))
-                    line = fp.readline()[:-1]
+                    line = fp.readline()
             plt.figure()
             plt.title(f"True Positive Ratio (probes belong to the same device)\n and\n True Negative Ratio (probes belong to different devices)\n (Iterations = {max(iter)}")
             plt.plot(iter, tp, color="blue", marker="o")
