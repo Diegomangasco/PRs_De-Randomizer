@@ -131,12 +131,12 @@ if __name__ == "__main__":
                     tp.append(float(el[1]))
                     tn.append(float(el[2]))
                     line = fp.readline()
-            plt.title(f"True Positive Ratio (probes belong to the same device)\n and\n True Negative Ratio (probes belong to different devices)\n (Iterations = {max(iter)}")
-            plt.plot(iter, tp, color="blue", marker="o")
-            plt.plot(iter, tn, color="red", marker="o")
+            plt.title(f"True Positive Ratio and True Negative Ratio\n (Iterations = {max(iter)})")
+            plt.plot(iter, tp, color="blue", marker=".")
+            plt.plot(iter, tn, color="red", marker=".")
             plt.ylabel("% of recognized probes")
             plt.xlabel("Iteration number")
-            plt.ylim((-0.5, 100))
+            plt.ylim((0, 120))
             plt.savefig("./stats.png")
 
         if options["fine_tuning_validation"] == "True":
