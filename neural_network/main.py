@@ -137,7 +137,7 @@ if __name__ == "__main__":
             plt.ylabel("% of recognized probes")
             plt.xlabel("Iteration number")
             plt.ylim((-0.5, 100))
-            plt.show()
+            plt.savefig("./stats.png")
 
         if options["fine_tuning_validation"] == "True":
             true_pos, false_neg, true_neg, false_pos = experiment.validate(validation_loader)
