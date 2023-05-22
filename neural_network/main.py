@@ -131,7 +131,6 @@ if __name__ == "__main__":
                     tp.append(float(el[1]))
                     tn.append(float(el[2]))
                     line = fp.readline()
-            plt.figure()
             plt.title(f"True Positive Ratio (probes belong to the same device)\n and\n True Negative Ratio (probes belong to different devices)\n (Iterations = {max(iter)}")
             plt.plot(iter, tp, color="blue", marker="o")
             plt.plot(iter, tn, color="red", marker="o")
