@@ -86,7 +86,7 @@ if __name__ == "__main__":
                     true_pos, false_neg, true_neg, false_pos = experiment.validate(validation_loader)
 
                     if options["graph"] == "True":
-                        with open("stats.txt", "a") as fp:
+                        with open("./stats.txt", "a") as fp:
                             fp.write("{} {} {}\n".format(iterations, true_pos, true_neg))
 
                     logging.info(f"[VALIDATE] at iterations {iterations}")
@@ -122,7 +122,7 @@ if __name__ == "__main__":
             iter = list()
             tp = list()
             tn = list()
-            with open("stats.txt", "a") as fp:
+            with open("./stats.txt", "r") as fp:
                 line = fp.readline()
                 while line:
                     line = line[:-1]
