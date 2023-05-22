@@ -1,7 +1,10 @@
 import argparse
+import datetime
 import logging
 from load_data import *
 from experiment import *
+import matplotlib.pyplot as plt
+import datetime
 
 '''
 HYPERPARAMETERS
@@ -16,16 +19,18 @@ POSSIBLE SETS:
 14*7*7*15*45 = 463,050
 '''
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--output_path", type=str, default=".")
     parser.add_argument("--input_path", type=str, default="./input/out_file")
+    parser.add_argument("--test_path", type=str, default="./input/test")
     parser.add_argument("--cpu", type=str, default="True")
     parser.add_argument("--test", type=str, default="False")
     parser.add_argument("--train", type=str, default="True")
-    parser.add_argument("--max_iterations", type=int, default=1000)
+    parser.add_argument("--max_iterations", type=int, default=2000)
     parser.add_argument("--learning_rate", type=float, default=1e-4)
     parser.add_argument("--alpha", type=float, default=1.0)
     parser.add_argument("--beta", type=float, default=1.0)
@@ -33,8 +38,9 @@ def parse_arguments():
     parser.add_argument("--hidden_size", type=int, default=150)
     parser.add_argument("--output_size", type=int, default=50)
     parser.add_argument("--validate_every", type=int, default=50)
-    parser.add_argument("--print_every", type=int, default=30)
+    parser.add_argument("--print_every", type=int, default=10)
     parser.add_argument("--fine_tuning_validation", type=str, default="False")
+    parser.add_argument("--graph", type=str, default="True")
 
     options = vars(parser.parse_args())
 
@@ -59,6 +65,8 @@ if __name__ == "__main__":
 
         logging.info("Starting train iterations")
 
+        start_time = datetime.datetime.now()
+
         iterations = 0
         total_train_loss = 0
         best_result = 0
@@ -75,6 +83,10 @@ if __name__ == "__main__":
                 if iterations % options["validate_every"] == 0 and options["fine_tuning_validation"] == "False":
 
                     true_pos, false_neg, true_neg, false_pos = experiment.validate(validation_loader)
+
+                    if options["graph"] == "True":
+                        with open("stats.txt", "a") as fp:
+                            fp.write("{} {} {}\n".format(iterations, true_pos, true_neg))
 
                     logging.info(f"[VALIDATE] at iterations {iterations}")
                     logging.info(f'Probes belonging to the same device => True Positive: {true_pos:.2f}, '
@@ -103,18 +115,43 @@ if __name__ == "__main__":
                 if iterations > options["max_iterations"]:
                     break
 
-    if options["fine_tuning_validation"] == "True":
-        true_pos, false_neg, true_neg, false_pos = experiment.validate(validation_loader)
+        logging.info(f"End train iterations, total time = {(datetime.datetime.now() - start_time).seconds/60} minutes")
 
-        with open("./fine_tuning.txt", "w") as fp:
-            fp.write("Accuracy (true positive + true negative): {} ({} + {}), iterations: {}, alpha: {}, beta: {}, hidden_size: {}, output_size: {}\n"
-                    .format(true_pos + true_neg, true_pos, true_neg, options["max_iterations"], options["alpha"], options["beta"], options["hidden_size"], options["output_size"]))
-    
+        if options["graph"] == "True":
+            iter = list()
+            tp = list()
+            tn = list()
+            with open("stats.txt", "a") as fp:
+                line = fp.readline()[:-1]
+                while line:
+                    el = line.split(" ")
+                    iter.append(int(el[0]))
+                    tp.append(float(el[1]))
+                    tn.append(float(el[2]))
+                    line = fp.readline()[:-1]
+            plt.figure()
+            plt.title(f"True Positive Ratio (probes belong to the same device)\n and\n True Negative Ratio (probes belong to different devices)\n (Iterations = {max(iter)}")
+            plt.plot(iter, tp, color="blue", marker="o")
+            plt.plot(iter, tn, color="red", marker="o")
+            plt.ylabel("% of recognized probes")
+            plt.xlabel("Iteration number")
+            plt.ylim((-0.5, 100))
+            plt.show()
+
+        if options["fine_tuning_validation"] == "True":
+            true_pos, false_neg, true_neg, false_pos = experiment.validate(validation_loader)
+
+            with open("./fine_tuning.txt", "w") as fp:
+                fp.write(
+                    "Accuracy (true positive + true negative): {} ({} + {}), iterations: {}, alpha: {}, beta: {}, hidden_size: {}, output_size: {}\n"
+                    .format(true_pos + true_neg, true_pos, true_neg, options["max_iterations"], options["alpha"],
+                            options["beta"], options["hidden_size"], options["output_size"]))
+
     if options["test"] == "True":
+        test_loader, ground_truth = load_test(options["test_path"])
         # Use last_checkpoint.pth since we train before with the optimal number of iterations coming from fine tuning process
         experiment.load_checkpoint(f'{options["output_path"]}/last_checkpoint.pth')
-        ground_truth, count = experiment.test(test_loader)
+        count = experiment.test(test_loader)
         logging.info("[COUNT TESTING]")
         logging.info("Number of devices present in the .pcap file: {}\n".format(ground_truth))
         logging.info("Number of devices detected: {}\n".format(count))
-        

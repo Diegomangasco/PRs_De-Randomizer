@@ -1,6 +1,7 @@
 import torch
 from statistics import mean
 from model import *
+from collections import defaultdict
 
 
 class Experiment:
@@ -82,6 +83,7 @@ class Experiment:
         return total_loss.item()
 
     def validate(self, data):
+        self.model.eval()
         false_positive = 0
         true_positive = 0
         false_negative = 0
@@ -104,7 +106,7 @@ class Experiment:
                         if device_label[i] == device_label[j]:
                             # Probes belong to the same device
                             total_positive += 1
-                            if self.criterion(res[i], res[j]) < self.threshold:
+                            if self.criterion(res[i], res[j]) <= self.threshold:
                                 # Same device recognized
                                 true_positive += 1
                             else:
@@ -135,5 +137,29 @@ class Experiment:
         return mean(TP_ratio), mean(FN_ratio), mean(TN_ratio), mean(FP_ratio)
 
     def test(self, data):
-        # TODO divide probes in clusters and count the number of clusters, return the number of devices present and the number of clusters created
-        pass
+        self.model.eval()
+        clusters = dict()
+        already_placed = set()
+
+        with torch.no_grad():
+            data = data.to(self.device)
+            res = self.model(data)
+
+            for i in range(len(res)):
+                for j in range(len(res)):
+                    # if the condition is satisfied, res[i] is very similar to res[j]
+                    if i != j and j not in already_placed and self.criterion(res[i], res[j]) <= self.threshold:
+                        if i not in clusters.keys():
+                            clusters[i] = 1
+                            already_placed.add(i)
+
+                        clusters[i] += 1  # Count itself and the new one
+                        already_placed.add(j)
+
+            # Probes not grouped
+            for i in range(len(res)):
+                if i not in already_placed:
+                    clusters[i] = 1
+
+        return len(clusters.keys())
+

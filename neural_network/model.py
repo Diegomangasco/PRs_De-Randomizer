@@ -9,7 +9,8 @@ class ProbeEncoderDecoder(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(input_size, hidden_size),
             nn.BatchNorm1d(hidden_size),
-            nn.ReLU()
+            nn.ReLU(),
+            nn.Dropout(p=0.5)
         )
         self.encoder_lstm = nn.LSTM(hidden_size, output_size, num_layers=2, batch_first=True)
 

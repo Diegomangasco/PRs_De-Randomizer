@@ -34,3 +34,6 @@ def load_data(file_path: str, batch_size: int):
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     validation_dataloader = DataLoader(validate_dataset, batch_size=batch_size, shuffle=True)
     return train_dataloader, validation_dataloader
+
+def load_test(file_path: str):
+    pass
