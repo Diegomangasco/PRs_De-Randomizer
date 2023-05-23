@@ -138,7 +138,7 @@ if __name__ == "__main__":
             l2, = ax.plot(iter, tn, color="red", marker=".", label="TN Ratio")
             handles, labels = ax.get_legend_handles_labels()
             ax.legend(handles, labels, loc="upper right")
-            ax.set_ylabel("% of probes distinction")
+            ax.set_ylabel("% of TP and TN")
             ax.set_xlabel("Iteration number")
             ax.set_ylim((0, 105))
             plt.savefig("./stats.png")
