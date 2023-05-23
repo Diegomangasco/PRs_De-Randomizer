@@ -134,9 +134,10 @@ if __name__ == "__main__":
 
             fig, ax = plt.subplots()
             ax.set_title(f"True Positive Ratio and True Negative Ratio\n (Iterations = {max(iter)})")
-            l1, _ = ax.plot(iter, tp, color="blue", marker=".")
-            l2, _ = ax.plot(iter, tn, color="red", marker=".")
-            ax.legend((l1, l2), ("TP Ratio", "TN Ratio"), loc="upper right")
+            l1, = ax.plot(iter, tp, color="blue", marker=".", label="TP Ratio")
+            l2, = ax.plot(iter, tn, color="red", marker=".", label="TN Ratio")
+            handles, labels = ax.get_legend_handles_labels()
+            ax.legend(handles, labels, loc="upper right")
             ax.set_ylabel("% of probes distinction")
             ax.set_xlabel("Iteration number")
             ax.set_ylim((0, 105))
