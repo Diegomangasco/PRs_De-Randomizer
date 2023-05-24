@@ -11,12 +11,12 @@ HYPERPARAMETERS
 max_iterations: between 500 and 7000 (step of 500 => 14 values), 
 alpha: possible values (0.001, 0.01, 0.1, 1, 10, 100, 1000), 
 beta: possible values (0.001, 0.01, 0.1, 1, 10, 100, 1000), 
-threshold: between 0.5 and 2.5 (step 0.1 => 15 values), 
-hidden_size: possible values (310, 300, 250, 200, 150, 100, 50, 25, 10), 
-output_size: possible values (310, 300, 250, 200, 150, 100, 50, 25, 10) (must be <= hidden_size)
+threshold: between 0.1 and 2.5 (step 0.1 => 24 values), 
+hidden_size: possible values (310, 250, 200, 150, 100, 50, 10), 
+output_size: possible values (310, 250, 200, 150, 100, 50, 10) (must be <= hidden_size)
 
 POSSIBLE SETS: 
-14*7*7*15*45 = 463,050
+14*7*7*24*28 = 460,992
 '''
 
 
@@ -116,7 +116,8 @@ if __name__ == "__main__":
                 if iterations > options["max_iterations"]:
                     break
 
-        logging.info(f"End train iterations, total time = {(datetime.datetime.now() - start_time).seconds/60} minutes")
+        logging.info(
+            f"End train iterations, total time = {(datetime.datetime.now() - start_time).seconds / 60} minutes")
 
         if options["graph"] == "True":
             iter = list()
@@ -146,6 +147,11 @@ if __name__ == "__main__":
         if options["fine_tuning_validation"] == "True":
             true_pos, false_neg, true_neg, false_pos = experiment.validate(validation_loader)
 
+            logging.info(
+                "Accuracy (true positive + true negative): {} ({} + {}), iterations: {}, alpha: {}, beta: {}, hidden_size: {}, output_size: {}\n"
+                .format(true_pos + true_neg, true_pos, true_neg, options["max_iterations"], options["alpha"],
+                        options["beta"], options["hidden_size"], options["output_size"]))
+
             with open("./fine_tuning.txt", "w") as fp:
                 fp.write(
                     "Accuracy (true positive + true negative): {} ({} + {}), iterations: {}, alpha: {}, beta: {}, hidden_size: {}, output_size: {}\n"
@@ -155,7 +161,7 @@ if __name__ == "__main__":
     if options["test"] == "True":
         test_loader, ground_truth = load_test(options["test_path"])
         # Use last_checkpoint.pth since we train before with the optimal number of iterations coming from fine tuning process
-        experiment.load_checkpoint(f'{options["output_path"]}/last_checkpoint.pth')
+        experiment.load_checkpoint(f'{options["output_path"]}/best_checkpoint.pth')
         count = experiment.test(test_loader)
         logging.info("[COUNT TESTING]")
         logging.info("Number of devices present in the .pcap file: {}\n".format(ground_truth))

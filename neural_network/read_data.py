@@ -77,6 +77,9 @@ class PreProcessing:
 
         start_time = None
 
+        # TODO read only one probe per burst (use a set with MAC and burst length to check and update) and store the burst length (default 1)
+        # TODO at the end put the set values as a new features "burst_length"
+
         # Parse every probe request
         for pkt in pyshark_packets:
             for i in range(len(pkt.layers)):
