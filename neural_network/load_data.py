@@ -1,6 +1,6 @@
 import random
 
-from numpy import array
+from numpy import array, concatenate
 from torch.utils.data import Dataset, DataLoader
 import read_data as rd
 import torch
@@ -26,8 +26,8 @@ def load_data(file_path: str, batch_size: int):
     inputs = pre_processing.get_features().to_numpy()
     labels = array(pre_processing.get_devices_IDs())
     index = random.randint(0, int(0.8 * len(inputs)))
-    train_data = inputs[:index][:] + inputs[index + int(0.2 * len(inputs)):][:]
-    train_labels = labels[:index][:] + labels[index + int(0.2 * len(labels)):]
+    train_data = concatenate((inputs[:index][:], inputs[index + int(0.2 * len(inputs)):][:]), axis=0)
+    train_labels = concatenate((labels[:index][:], labels[index + int(0.2 * len(labels)):]), axis=1)
     validate_data = inputs[index:index+int(0.2*len(inputs))][:]
     validate_labels = labels[index:index+int(0.2*len(labels))]
     train_data = torch.tensor(train_data, dtype=torch.float32)
