@@ -41,6 +41,7 @@ def parse_arguments():
     parser.add_argument("--print_every", type=int, default=50)
     parser.add_argument("--fine_tuning_validation", type=str, default="False")
     parser.add_argument("--graph", type=str, default="True")
+    parser.add_argument("--figure_path", type=str, default=".")
 
     options = vars(parser.parse_args())
 
@@ -135,14 +136,14 @@ if __name__ == "__main__":
 
             fig, ax = plt.subplots()
             ax.set_title(f"True Positive Ratio and True Negative Ratio\n (Iterations = {max(iter)})")
-            l1, = ax.plot(iter, tp, color="blue", marker=".", label="TP Ratio")
-            l2, = ax.plot(iter, tn, color="red", marker=".", label="TN Ratio")
+            ax.plot(iter, tp, color="blue", marker=".", label="TP Ratio")
+            ax.plot(iter, tn, color="red", marker=".", label="TN Ratio")
             handles, labels = ax.get_legend_handles_labels()
             ax.legend(handles, labels, loc="upper right")
             ax.set_ylabel("% of TP and TN")
             ax.set_xlabel("Iteration number")
             ax.set_ylim((0, 105))
-            plt.savefig("./stats.png")
+            plt.savefig(options["figure_path"])
 
         if options["fine_tuning_validation"] == "True":
             true_pos, false_neg, true_neg, false_pos = experiment.validate(validation_loader)

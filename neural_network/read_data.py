@@ -127,7 +127,7 @@ class PreProcessing:
 
         logging.info("Filling missing fields with mean strategy")
 
-        mean_imputer = SimpleImputer(missing_values=np.nan, strategy="mean")  # Strategy can change
+        mean_imputer = SimpleImputer(missing_values=np.nan, strategy="constant", fill_value=-1.0)  # Strategy can change
         features = mean_imputer.fit_transform(features)
 
         # DATAFRAME CREATION

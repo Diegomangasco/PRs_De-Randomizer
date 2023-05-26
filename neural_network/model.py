@@ -12,7 +12,7 @@ class ProbeEncoderDecoder(nn.Module):
             nn.ReLU(),
             nn.Dropout(p=0.5)
         )
-        self.encoder_lstm = nn.LSTM(hidden_size, output_size, num_layers=2, batch_first=True)
+        self.encoder_lstm = nn.LSTM(hidden_size, output_size, num_layers=3, dropout=0.5, batch_first=True)
 
     def forward(self, x):
         x = self.encoder(x)
