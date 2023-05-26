@@ -1,3 +1,5 @@
+import random
+
 from numpy import array
 from torch.utils.data import Dataset, DataLoader
 import read_data as rd
@@ -23,16 +25,17 @@ def load_data(file_path: str, batch_size: int):
     logging.info("Creating data loaders")
     inputs = pre_processing.get_features().to_numpy()
     labels = array(pre_processing.get_devices_IDs())
-    train_data = inputs[:int(0.8 * len(inputs))][:]
-    train_labels = labels[:int(0.8 * len(labels))]
-    validate_data = inputs[int(0.8 * len(inputs)):][:]
-    validate_labels = labels[int(0.8 * len(labels)):]
+    index = random.randint(0, int(0.8 * len(inputs)))
+    train_data = inputs[:index][:] + inputs[index + int(0.2 * len(inputs)):][:]
+    train_labels = labels[:index][:] + labels[index + int(0.2 * len(labels)):]
+    validate_data = inputs[index:index+int(0.2*len(inputs))][:]
+    validate_labels = labels[index:index+int(0.2*len(labels))]
     train_data = torch.tensor(train_data, dtype=torch.float32)
     validate_data = torch.tensor(validate_data, dtype=torch.float32)
     train_dataset = CustomDataset(train_data, train_labels)
     validate_dataset = CustomDataset(validate_data, validate_labels)
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
-    validation_dataloader = DataLoader(validate_dataset, batch_size=batch_size, shuffle=False)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    validation_dataloader = DataLoader(validate_dataset, batch_size=batch_size, shuffle=True)
 
     return train_dataloader, validation_dataloader
 
