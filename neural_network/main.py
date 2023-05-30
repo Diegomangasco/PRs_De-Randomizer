@@ -1,6 +1,4 @@
 import argparse
-import datetime
-import logging
 from load_data import *
 from experiment import *
 import matplotlib.pyplot as plt
@@ -11,7 +9,7 @@ HYPERPARAMETERS
 max_iterations: always 7000 (saving best checkpoints and which iteration), 
 alpha: possible values (0.001, 0.01, 0.1, 1, 10, 100, 1000), 
 beta: possible values (0.001, 0.01, 0.1, 1, 10, 100, 1000), 
-threshold: between 0.1 and 2.5 (step 0.1 => 24 values), 
+threshold: between 0.0001 and TO VERIFY (step 0.1 => 24 values), 
 hidden_size: possible values (310, 250, 200, 150, 100, 50, 70, 10), 
 output_size: possible values (310, 250, 200, 150, 100, 50, 70, 10) (must be <= hidden_size)
 
@@ -23,22 +21,23 @@ POSSIBLE SETS:
 def parse_arguments():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--output_path", type=str, default=".")
-    parser.add_argument("--input_path", type=str, default="./input/out_file")
+    parser.add_argument("--input_path", type=str, default="./input/train")
+    parser.add_argument("--validate_path", type=str, default="./input/validate")
     parser.add_argument("--test_path", type=str, default="./input/test")
     parser.add_argument("--cpu", type=str, default="True")
     parser.add_argument("--test", type=str, default="False")
     parser.add_argument("--train", type=str, default="True")
-    parser.add_argument("--max_iterations", type=int, default=7000)
-    parser.add_argument("--learning_rate", type=float, default=1e-4)
+    parser.add_argument("--max_iterations", type=int, default=700)
+    parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--alpha", type=float, default=1.0)
     parser.add_argument("--beta", type=float, default=1.0)
     parser.add_argument("--threshold", type=float, default=0.25)
     parser.add_argument("--hidden_size", type=int, default=150)
     parser.add_argument("--output_size", type=int, default=50)
-    parser.add_argument("--validate_every", type=int, default=10)
-    parser.add_argument("--print_every", type=int, default=5)
+    parser.add_argument("--validate_every", type=int, default=20)
+    parser.add_argument("--print_every", type=int, default=10)
     parser.add_argument("--fine_tuning", type=str, default="False")
     parser.add_argument("--graph", type=str, default="False")
     parser.add_argument("--figure_path", type=str, default="./graphs/tn-tp_statistics")
@@ -53,7 +52,11 @@ if __name__ == "__main__":
     start_time = datetime.datetime.now()
 
     options = parse_arguments()
+
+    train_loader, validation_loader, features_number = load_data(options["input_path"], options["validate_path"], options["batch_size"])
+
     experiment = Experiment(
+        features_number,
         options["hidden_size"],
         options["output_size"],
         options["alpha"],
@@ -62,8 +65,6 @@ if __name__ == "__main__":
         options["learning_rate"],
         options["cpu"]
     )
-
-    train_loader, validation_loader = load_data(options["input_path"], options["batch_size"])
 
     if options["train"] == "True":
 
@@ -88,7 +89,7 @@ if __name__ == "__main__":
 
                     if options["graph"] == "True":
                         with open("./stats.txt", "a") as fp:
-                            fp.write("{} {}\n".format(iterations, best_result))
+                            fp.write("{} {}\n".format(iterations, (true_pos + true_neg) - abs(true_pos - true_neg)))
 
                     logging.info(f"[VALIDATE] at iterations {iterations}")
                     logging.info(f'Probes belonging to the same device => True Positive: {true_pos:.2f}, '
@@ -107,16 +108,16 @@ if __name__ == "__main__":
                         )
                         if options["fine_tuning"] == "True":
                             logging.info(
-                                "Accuracy (true positive + true negative): {} ({} + {}), iterations: {}, alpha: {}, beta: {}, hidden_size: {}, output_size: {}, threshold: {}\n"
+                                "Accuracy (true positive, true negative): {} ({}, {}), iterations: {}, alpha: {}, beta: {}, hidden_size: {}, output_size: {}, threshold: {}\n"
                                 .format(best_result, true_pos, true_neg, iterations,
                                         options["alpha"],
                                         options["beta"], options["hidden_size"], options["output_size"],
                                         options["threshold"]))
 
-                            with open("./fine_tuning.txt", "w") as fp:
+                            with open("./fine_tuning.txt", "a") as fp:
                                 fp.write(
-                                    "Accuracy (true positive + true negative): {} ({} + {}), iterations: {}, alpha: {}, beta: {}, hidden_size: {}, output_size: {}, threshold: {}\n"
-                                    .format(true_pos + true_neg, true_pos, true_neg, iterations,
+                                    "Accuracy (true positive, true negative): {} ({}, {}), iterations: {}, alpha: {}, beta: {}, hidden_size: {}, output_size: {}, threshold: {}\n"
+                                    .format(best_result, true_pos, true_neg, iterations,
                                             options["alpha"],
                                             options["beta"], options["hidden_size"], options["output_size"],
                                             options["threshold"]))
@@ -151,12 +152,12 @@ if __name__ == "__main__":
 
             fig, ax = plt.subplots()
             ax.set_title(f"True Positive and True Negative\n (Iterations = {max(iter)})")
-            ax.plot(iter, res, color="blue", marker=".", label="(TP+TN)-(TP-TN)")
+            ax.plot(iter, res, color="blue", marker=".", label="(TP+TN)-|TP-TN|")
             handles, labels = ax.get_legend_handles_labels()
             ax.legend(handles, labels, loc="upper right")
             ax.set_ylabel("Probes identification")
             ax.set_xlabel("Iteration number")
-            ax.set_ylim((0, 105))
+            ax.set_ylim((0, max(res)+5))
             plt.savefig(options["figure_path"])
 
     if options["test"] == "True":

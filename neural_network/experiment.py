@@ -8,11 +8,11 @@ class Experiment:
 
     # Hyper parameters: alpha, beta, threshold, hidden_size, output_size, learning_rate
 
-    def __init__(self, hidden_size, output_size, alpha, beta, threshold, learning_rate, device):
+    def __init__(self, features_number, hidden_size, output_size, alpha, beta, threshold, learning_rate, device):
         self.device = torch.device("cpu" if device else "cuda:0")
 
         # Setup model
-        input_size = 305  # Number of features
+        input_size = features_number
         self.model = ProbeEncoderDecoder(input_size, hidden_size, output_size)
         self.model.train()
         self.model.to(self.device)
@@ -90,10 +90,10 @@ class Experiment:
         true_negative = 0
         total_positive = 0
         total_negative = 0
-        TP_ratio = list()
-        TN_ratio = list()
-        FP_ratio = list()
-        FN_ratio = list()
+        TP_list = list()
+        TN_list = list()
+        FP_list = list()
+        FN_list = list()
         with torch.no_grad():
             for x, device_label in data:
                 x = x.to(self.device)
@@ -121,10 +121,11 @@ class Experiment:
                             else:
                                 # Different devices not recognized
                                 false_positive += 1
-                    TP_ratio.append(100 * (true_positive / total_positive))
-                    FN_ratio.append(100 * (false_negative / total_positive))
-                    TN_ratio.append(100 * (true_negative / total_negative))
-                    FP_ratio.append(100 * (false_positive / total_negative))
+
+                    TP_list.append(100 * (true_positive / total_positive))
+                    FN_list.append(100 * (false_negative / total_positive))
+                    TN_list.append(100 * (true_negative / total_negative))
+                    FP_list.append(100 * (false_positive / total_negative))
                     total_negative = 0
                     total_positive = 0
                     true_positive = 0
@@ -134,7 +135,7 @@ class Experiment:
 
         self.model.train()
 
-        return mean(TP_ratio), mean(FN_ratio), mean(TN_ratio), mean(FP_ratio)
+        return mean(TP_list), mean(FN_list), mean(TN_list), mean(FP_list)
 
     def test(self, data):
         self.model.eval()

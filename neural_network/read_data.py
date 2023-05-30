@@ -7,7 +7,6 @@ from hashlib import sha1
 import numpy as np
 import pandas as pd
 from sklearn.impute import SimpleImputer
-from sklearn.decomposition import PCA
 
 OUTPUT_DIRECTORY = "./features_files/"
 CUT_INDEX = 20  # Derived from the theorem
@@ -106,6 +105,8 @@ class PreProcessing:
                 fields.add("time")
             features["time"].append(datetime.datetime.timestamp(pkt.sniff_time) - start_time)
 
+        pyshark_packets.close()
+
         # BUILD FEATURES MATRIX
 
         logging.info("Building features matrix")
@@ -143,55 +144,3 @@ class PreProcessing:
         for column in self._features.columns:
             std = 1.0 if self._features[column].std() == 0.0 else self._features[column].std()
             self._features[column] = (self._features[column] - self._features[column].mean()) / std
-
-        # DATASET STORAGE
-
-        # logging.info("Saving features inside .csv file")
-        #
-        # self._features.to_csv(OUTPUT_DIRECTORY + file + ".csv", sep=",", float_format="%.4f", index=False)
-
-    def read_csv(self, file: str) -> None:
-        """
-        Function to read the .csv file if present.
-        :return None
-        """
-
-        self._features = pd.read_csv(OUTPUT_DIRECTORY + file + ".csv", sep=",")
-        # Read the device IDs from the .txt file
-        self._devices_IDs = list()
-        with open(INPUT_DIRECTORY + file + ".txt", "r") as txt_reader:
-            line = txt_reader.readline()
-            while line:
-                self._devices_IDs.append(int(line))
-                line = txt_reader.readline()
-        self._total_devices = max(self._devices_IDs) + 1
-
-    def principal_component_analysis(self, n_components=7, explainable=False) -> None:
-        """
-        Computes the Principal Component Analysis and projects the features over the principal components.
-        """
-
-        def explainable_principal_component_analysis(pca: PCA, feature_names: list) -> None:
-            # number of components
-            n_pcs = pca.components_.shape[0]
-
-            # get the index of the most important feature on each component
-            most_important = [np.abs(pca.components_[i]).argmax() for i in range(n_pcs)]
-
-            # get the names
-            most_important_names = [feature_names[most_important[i]] for i in range(n_pcs)]
-            names = [most_important_names[i] for i in range(n_pcs)]
-            df = pd.DataFrame(names)
-
-            print("Most relevant features for PCA")
-            print(df)
-            print("Features variance ratio (%)")
-            print(100 * pca.explained_variance_ratio_)
-            print("Features singular values")
-            print(pca.singular_values_)
-
-        pca = PCA(n_components)
-        self._features = pca.fit_transform(self._features)
-        if explainable:
-            features_names = list(self._features.keys())
-            explainable_principal_component_analysis(pca, features_names)
