@@ -9,17 +9,17 @@ class ProbeEncoderDecoder(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(input_size, hidden_size),
             nn.BatchNorm1d(hidden_size),
-            nn.ReLU(),
-            nn.Dropout(p=0.5),
-            nn.Linear(hidden_size, output_size),
-            nn.BatchNorm1d(output_size),
-            nn.ReLU(),
-            nn.Dropout(p=0.5)
+            nn.ReLU()
+            # nn.Dropout(p=0.5),
+            # nn.Linear(hidden_size, output_size),
+            # nn.BatchNorm1d(output_size),
+            # nn.ReLU(),
+            # nn.Dropout(p=0.5)
         )
         self.lstm = nn.LSTM(hidden_size, output_size, num_layers=3, dropout=0.5, batch_first=True)
 
     def forward(self, x):
         x = self.encoder(x)
-        # x, _ = self.lstm(x)
+        x, _ = self.lstm(x)
 
         return x
