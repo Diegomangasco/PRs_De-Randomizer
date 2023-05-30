@@ -21,10 +21,9 @@ POSSIBLE SETS:
 def parse_arguments():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--output_path", type=str, default=".")
     parser.add_argument("--input_path", type=str, default="./input/train")
-    parser.add_argument("--validate_path", type=str, default="./input/validate")
     parser.add_argument("--test_path", type=str, default="./input/test")
     parser.add_argument("--cpu", type=str, default="True")
     parser.add_argument("--test", type=str, default="False")
@@ -53,7 +52,7 @@ if __name__ == "__main__":
 
     options = parse_arguments()
 
-    train_loader, validation_loader, features_number = load_data(options["input_path"], options["validate_path"], options["batch_size"])
+    train_loader, validation_loader, features_number = load_data(options["input_path"], options["batch_size"])
 
     experiment = Experiment(
         features_number,
