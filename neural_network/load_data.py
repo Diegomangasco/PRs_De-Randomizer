@@ -22,7 +22,9 @@ class CustomDataset(Dataset):
 def load_data(file_path: str, batch_size: int):
     pre_processing = rd.PreProcessing()
     pre_processing.read_pcap(file_path)
+
     logging.info("Creating data loaders")
+
     inputs = pre_processing.get_features().to_numpy()
     labels = array(pre_processing.get_devices_IDs())
     index = random.randint(0, int(0.8 * len(inputs)))
@@ -30,14 +32,19 @@ def load_data(file_path: str, batch_size: int):
     train_labels = hstack((labels[:index][:], labels[index + int(0.2 * len(labels)):]))
     validate_data = inputs[index:index+int(0.2*len(inputs))][:]
     validate_labels = labels[index:index+int(0.2*len(labels))]
+
     train_data = torch.tensor(train_data, dtype=torch.float32)
     validate_data = torch.tensor(validate_data, dtype=torch.float32)
+
     train_dataset = CustomDataset(train_data, train_labels)
     validate_dataset = CustomDataset(validate_data, validate_labels)
+
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     validation_dataloader = DataLoader(validate_dataset, batch_size=batch_size, shuffle=True)
 
-    return train_dataloader, validation_dataloader
+    features_number = inputs.shape[1]
+
+    return train_dataloader, validation_dataloader, features_number
 
 
 def load_test(file_path: str):
