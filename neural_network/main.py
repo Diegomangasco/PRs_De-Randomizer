@@ -1,7 +1,7 @@
 import argparse
 from load_data import *
 from experiment import *
-import matplotlib.pyplot as plt
+from plot import *
 import datetime
 
 '''
@@ -28,18 +28,18 @@ def parse_arguments():
     parser.add_argument("--cpu", type=str, default="True")
     parser.add_argument("--test", type=str, default="False")
     parser.add_argument("--train", type=str, default="True")
-    parser.add_argument("--max_iterations", type=int, default=700)
+    parser.add_argument("--max_iterations", type=int, default=200)
     parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--alpha", type=float, default=1.0)
     parser.add_argument("--beta", type=float, default=1.0)
-    parser.add_argument("--threshold", type=float, default=0.25)
+    parser.add_argument("--threshold", type=float, default=5.0)
     parser.add_argument("--hidden_size", type=int, default=150)
     parser.add_argument("--output_size", type=int, default=50)
-    parser.add_argument("--validate_every", type=int, default=20)
-    parser.add_argument("--print_every", type=int, default=10)
+    parser.add_argument("--print_every", type=int, default=5)
+    parser.add_argument("--validate_every", type=int, default=10)
     parser.add_argument("--fine_tuning", type=str, default="False")
     parser.add_argument("--graph", type=str, default="False")
-    parser.add_argument("--figure_path", type=str, default="./graphs/tn-tp_statistics")
+    parser.add_argument("--figure_path", type=str, default="./graphs")
 
     options = vars(parser.parse_args())
 
@@ -77,28 +77,25 @@ if __name__ == "__main__":
 
             for data in train_loader:
 
-                if iterations % options["print_every"] == 0:
-                    logging.info(f"[ITERATION]: {iterations}")
-
                 total_train_loss += experiment.train(data)
+
+                if iterations % options["print_every"] == 0:
+                    logging.info(f"[ITERATION]: {iterations}, Loss: {total_train_loss}")
 
                 if iterations % options["validate_every"] == 0:
 
-                    true_pos, false_neg, true_neg, false_pos = experiment.validate(validation_loader)
+                    accuracy, same_distance, different_distance = experiment.validate(validation_loader)
 
                     if options["graph"] == "True":
-                        with open("./stats.txt", "a") as fp:
-                            fp.write("{} {}\n".format(iterations, (true_pos + true_neg) - abs(true_pos - true_neg)))
+                        with open("./graphs/stats.txt", "a") as fp:
+                            fp.write("{} {} {} {}\n".format(iterations, accuracy, same_distance, different_distance))
 
                     logging.info(f"[VALIDATE] at iterations {iterations}")
-                    logging.info(f'Probes belonging to the same device => True Positive: {true_pos:.2f}, '
-                                 f'False Negative: {false_neg:.2f}')
-                    logging.info(f'Probes belonging to different devices => False Positive: {false_pos:.2f}, '
-                                 f'True Negative: {true_neg:.2f}')
+                    logging.info(f"Accuracy on the validation set: {accuracy}")
 
-                    if (true_pos + true_neg) - abs(true_pos - true_neg) > best_result:
+                    if accuracy > best_result:
                         logging.info("Saving checkpoint")
-                        best_result = (true_pos + true_neg) - abs(true_pos - true_neg)
+                        best_result = accuracy
                         experiment.save_checkpoint(
                             f'{options["output_path"]}/best_checkpoint.pth',
                             iterations,
@@ -138,30 +135,11 @@ if __name__ == "__main__":
         )
 
         if options["graph"] == "True":
-            iter = list()
-            res = list()
-            with open("./stats.txt", "r") as fp:
-                line = fp.readline()
-                while line:
-                    line = line[:-1]
-                    el = line.split(" ")
-                    iter.append(int(el[0]))
-                    res.append(float(el[1]))
-                    line = fp.readline()
-
-            fig, ax = plt.subplots()
-            ax.set_title(f"True Positive and True Negative\n (Iterations = {max(iter)})")
-            ax.plot(iter, res, color="blue", marker=".", label="(TP+TN)-|TP-TN|")
-            handles, labels = ax.get_legend_handles_labels()
-            ax.legend(handles, labels, loc="upper right")
-            ax.set_ylabel("Probes identification")
-            ax.set_xlabel("Iteration number")
-            ax.set_ylim((0, max(res)+5))
-            plt.savefig(options["figure_path"])
+            graph_plot(options["figure_path"], options["threshold"])
 
     if options["test"] == "True":
-        test_loader, ground_truth = load_test(options["test_path"])
         # Use last_checkpoint.pth since we train before with the optimal number of iterations coming from fine-tuning process
+        test_loader, ground_truth = load_test(options["test_path"])
         experiment.load_checkpoint(f'{options["output_path"]}/best_checkpoint.pth')
         count = experiment.test(test_loader)
         logging.info("[COUNT TESTING]")

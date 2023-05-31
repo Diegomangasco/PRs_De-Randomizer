@@ -1,7 +1,6 @@
 import torch
 from statistics import mean
 from model import *
-from collections import defaultdict
 
 
 class Experiment:
@@ -22,7 +21,7 @@ class Experiment:
 
         # Setup optimization procedure
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.BCELoss()
         self.alpha = alpha
         self.beta = beta
         self.threshold = threshold
@@ -56,44 +55,45 @@ class Experiment:
         device_label = device_label.numpy()
         res = self.model(x)
 
-        # loss_1 is computed for probes belonging to the same device
-        # loss_2 is computed for probes belonging to different devices
-        loss_1 = 0
-        loss_2 = 0
-        total_positive_pairs = 0
-        total_negative_pairs = 0
+        ideal_output = list()
+        real_output = list()
         for i in range(len(device_label)):
-            for j in range(len(device_label)):
+            for j in range(i, len(device_label)):
+                distance = torch.dist(res[i], res[j]).item()
                 if device_label[i] == device_label[j]:
-                    total_positive_pairs += 1
-                    loss_1 = loss_1 + self.criterion(res[i], res[j])
+                    ideal_output.append(1)
+                    if distance <= self.threshold:
+                        # Classified as similar (True Positive)
+                        real_output.append(1)
+                    else:
+                        # Classified as different (False Negative)
+                        real_output.append(0)
                 else:
-                    total_negative_pairs += 1
-                    loss_2 = loss_2 + self.criterion(res[i], res[j])
+                    ideal_output.append(0)
+                    if distance > self.threshold:
+                        # Classified as different (True Negative)
+                        real_output.append(0)
+                    else:
+                        # Classified as similar (False Positive)
+                        real_output.append(1)
 
-        # loss_1 is a normal loss, loss_2 is an adversarial loss
-        loss_1 /= total_positive_pairs
-        loss_2 /= total_negative_pairs
-        total_loss = self.alpha*loss_1 - self.beta*loss_2
+        ideal_output = torch.tensor(ideal_output, dtype=torch.float32, requires_grad=True)
+        real_output = torch.tensor(real_output, dtype=torch.float32)
+        loss = self.criterion(real_output, ideal_output)
 
         self.optimizer.zero_grad()
-        total_loss.backward()
+        loss.backward()
         self.optimizer.step()
 
-        return total_loss.item()
+        return loss.item()
 
     def validate(self, data):
         self.model.eval()
-        false_positive = 0
-        true_positive = 0
-        false_negative = 0
-        true_negative = 0
-        total_positive = 0
-        total_negative = 0
-        TP_list = list()
-        TN_list = list()
-        FP_list = list()
-        FN_list = list()
+        ideal_output = list()
+        real_output = list()
+        accuracy_list = list()
+        same_distance = list()
+        different_distance = list()
         with torch.no_grad():
             for x, device_label in data:
                 x = x.to(self.device)
@@ -102,40 +102,43 @@ class Experiment:
                 res = self.model(x)
 
                 for i in range(len(device_label)):
-                    for j in range(len(device_label)):
+                    for j in range(i, len(device_label)):
+                        distance = torch.dist(res[i], res[j]).item()
                         if device_label[i] == device_label[j]:
                             # Probes belong to the same device
-                            total_positive += 1
-                            if self.criterion(res[i], res[j]) <= self.threshold:
+                            same_distance.append(distance)
+                            ideal_output.append(1)
+                            if distance <= self.threshold:
                                 # Same device recognized
-                                true_positive += 1
+                                real_output.append(1)
                             else:
                                 # Same device but not recognized
-                                false_negative += 1
+                                real_output.append(0)
                         else:
                             # Probes don't belong to the same device
-                            total_negative += 1
-                            if self.criterion(res[i], res[j]) > self.threshold:
+                            different_distance.append(distance)
+                            ideal_output.append(0)
+                            if distance > self.threshold:
                                 # Different devices recognized:
-                                true_negative += 1
+                                real_output.append(0)
                             else:
                                 # Different devices not recognized
-                                false_positive += 1
+                                real_output.append(1)
 
-                    TP_list.append(100 * (true_positive / total_positive))
-                    FN_list.append(100 * (false_negative / total_positive))
-                    TN_list.append(100 * (true_negative / total_negative))
-                    FP_list.append(100 * (false_positive / total_negative))
-                    total_negative = 0
-                    total_positive = 0
-                    true_positive = 0
-                    true_negative = 0
-                    false_negative = 0
-                    false_positive = 0
+                accuracy_list.append(
+                    100 * sum(
+                        [1 if real == ideal else 0 for real, ideal in zip(real_output, ideal_output)]
+                    ) / len(
+                        ideal_output
+                    )
+                )
+
+                real_output.clear()
+                ideal_output.clear()
 
         self.model.train()
 
-        return mean(TP_list), mean(FN_list), mean(TN_list), mean(FP_list)
+        return mean(accuracy_list), mean(same_distance), mean(different_distance)
 
     def test(self, data):
         self.model.eval()
@@ -143,24 +146,25 @@ class Experiment:
         already_placed = set()
 
         with torch.no_grad():
-            data = data.to(self.device)
-            res = self.model(data)
+            x = data.to(self.device)
+            res = self.model(x)
+            results = res.numpy()
 
-            for i in range(len(res)):
-                for j in range(len(res)):
+            for i in range(len(results)):
+                for j in range(i, len(results)):
                     # if the condition is satisfied, res[i] is very similar to res[j]
-                    if i != j and j not in already_placed and self.criterion(res[i], res[j]) <= self.threshold:
-                        if i not in clusters.keys():
-                            clusters[i] = 1
-                            already_placed.add(i)
-
-                        clusters[i] += 1  # Count itself and the new one
+                    if i == j and i not in already_placed:
+                        clusters[i] = 1
+                    elif i in already_placed:
+                        break
+                    elif i != j and j not in already_placed and torch.dist(res[i], res[j]) <= self.threshold:
+                        clusters[i] += 1  # Count new probe
                         already_placed.add(j)
 
             # Probes not grouped
-            for i in range(len(res)):
-                if i not in already_placed:
-                    clusters[i] = 1
+            # for i in range(len(res)):
+            #     if i not in already_placed:
+            #         clusters[i] = 1
 
         return len(clusters.keys())
 
