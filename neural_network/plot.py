@@ -19,7 +19,7 @@ def graph_plot(figure_path, threshold):
 
     fig, ax = plt.subplots(2, 1, sharex=True)
     fig.set_size_inches(12.5, 19.625)
-    fig.suptitle(f"Encoder Neural Network Statistics (Iterations = {max(iterations)})")
+    fig.suptitle(f"10 Devices (Iterations = {max(iterations)})")
     ax[0].set_title(f"Detection accuracy")
     ax[0].plot(iterations, res, color="blue", marker=".", label="Accuracy")
     handles, labels = ax[0].get_legend_handles_labels()
@@ -37,7 +37,7 @@ def graph_plot(figure_path, threshold):
     ax[1].set_xlabel("Iteration number")
     ax[1].set_ylim((0, max([max(diff_same), max(diff_different)])+3))
 
-    plt.savefig(f"{figure_path}/tn-tp_statistics", dpi=220)
+    plt.savefig(f"{figure_path}/_devices", dpi=220)
 
 
-graph_plot("./graphs", 5.0)
+# graph_plot("./graphs", 3.0)

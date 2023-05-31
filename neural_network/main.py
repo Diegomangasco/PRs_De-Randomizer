@@ -32,7 +32,7 @@ def parse_arguments():
     parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--alpha", type=float, default=1.0)
     parser.add_argument("--beta", type=float, default=1.0)
-    parser.add_argument("--threshold", type=float, default=5.0)
+    parser.add_argument("--threshold", type=float, default=2.0)
     parser.add_argument("--hidden_size", type=int, default=150)
     parser.add_argument("--output_size", type=int, default=50)
     parser.add_argument("--print_every", type=int, default=5)
@@ -87,7 +87,7 @@ if __name__ == "__main__":
                     accuracy, same_distance, different_distance = experiment.validate(validation_loader)
 
                     if options["graph"] == "True":
-                        with open("./graphs/stats.txt", "a") as fp:
+                        with open("graphs/10_stats.txt", "a") as fp:
                             fp.write("{} {} {} {}\n".format(iterations, accuracy, same_distance, different_distance))
 
                     logging.info(f"[VALIDATE] at iterations {iterations}")
