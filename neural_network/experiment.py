@@ -12,7 +12,7 @@ class Experiment:
 
         # Setup model
         input_size = features_number
-        self.model = ProbeEncoderDecoder(input_size, hidden_size, output_size)
+        self.model = ProbesEncoder(input_size, hidden_size, output_size)
         self.model.train()
         self.model.to(self.device)
 
