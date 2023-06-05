@@ -28,7 +28,7 @@ def parse_arguments():
     parser.add_argument("--cpu", type=str, default="True")
     parser.add_argument("--test", type=str, default="False")
     parser.add_argument("--train", type=str, default="True")
-    parser.add_argument("--max_iterations", type=int, default=200)
+    parser.add_argument("--max_iterations", type=int, default=300)
     parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--alpha", type=float, default=1.0)
     parser.add_argument("--beta", type=float, default=1.0)
@@ -52,20 +52,22 @@ if __name__ == "__main__":
 
     options = parse_arguments()
 
-    train_loader, validation_loader, features_number = load_data(options["input_path"], options["batch_size"])
-
-    experiment = Experiment(
-        features_number,
-        options["hidden_size"],
-        options["output_size"],
-        options["alpha"],
-        options["beta"],
-        options["threshold"],
-        options["learning_rate"],
-        options["cpu"]
-    )
+    experiment = None
 
     if options["train"] == "True":
+
+        train_loader, validation_loader, features = load_data(options["input_path"], options["batch_size"])
+
+        experiment = Experiment(
+            len(features),
+            options["hidden_size"],
+            options["output_size"],
+            options["alpha"],
+            options["beta"],
+            options["threshold"],
+            options["learning_rate"],
+            options["cpu"]
+        )
 
         logging.info("Starting train iterations")
 
@@ -139,8 +141,8 @@ if __name__ == "__main__":
 
     if options["test"] == "True":
         # Use last_checkpoint.pth since we train before with the optimal number of iterations coming from fine-tuning process
-        test_loader, ground_truth = load_test(options["test_path"])
-        experiment.load_checkpoint(f'{options["output_path"]}/best_checkpoint.pth')
+        test_loader, ground_truth = load_test(options["test_path"], features)
+        experiment.load_checkpoint(f'{options["output_path"]}/last_checkpoint.pth')
         count = experiment.test(test_loader)
         logging.info("[COUNT TESTING]")
         logging.info("Number of devices present in the .pcap file: {}\n".format(ground_truth))

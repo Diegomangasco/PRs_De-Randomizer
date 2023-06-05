@@ -44,9 +44,11 @@ def load_data(file_path: str, batch_size: int):
 
     logging.info("Creating data loaders")
 
-    inputs = pre_processing.get_features().to_numpy()
+    inputs = pre_processing.get_features()
+    features = list(inputs.keys())
+    inputs = inputs.to_numpy()
     labels = array(pre_processing.get_devices_IDs())
-    [data[lab].append(inputs[i][:]) for i, lab in enumerate(labels)]
+    _ = [data[lab].append(inputs[i][:]) for i, lab in enumerate(labels)]
 
     source_category_ratios = {label: len(probes) for label, probes in data.items()}
     source_total_examples = sum(source_category_ratios.values())
@@ -71,21 +73,26 @@ def load_data(file_path: str, batch_size: int):
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
     validation_dataloader = DataLoader(validate_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
-    features_number = inputs.shape[1]
-
-    return train_dataloader, validation_dataloader, features_number
+    return train_dataloader, validation_dataloader, features
 
 
-def load_test(file_path: str):
+def load_test(file_path: str, features: list):
     pre_processing = rd.PreProcessing()
     pre_processing.read_pcap(file_path)
 
     logging.info("Creating test loader")
 
-    inputs = pre_processing.get_features().to_numpy()
+    inputs = pre_processing.get_features()
+    if len(inputs.keys()) > len(features):
+        inputs = inputs[features]
+    elif len(inputs.keys()) < len(features):
+        for i, f in enumerate(features):
+            if f not in inputs.keys():
+                inputs.insert(i, f, array([-1.0 for _ in range(inputs.shape[0])]))
+        inputs = inputs[features]
+    inputs = inputs.to_numpy()
     test_data = torch.tensor(inputs, dtype=torch.float32)
 
-    test_dataset = CustomDatasetTest(test_data)
-    test_dataloader = DataLoader(test_dataset, batch_size=inputs.shape[0], shuffle=False)
+    ground_truth = pre_processing.get_devices_number()
 
-    return test_dataloader
+    return test_data, ground_truth

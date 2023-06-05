@@ -146,25 +146,19 @@ class Experiment:
         already_placed = set()
 
         with torch.no_grad():
-            x = data.to(self.device)
-            res = self.model(x)
-            results = res.numpy()
+            data = data.to(self.device)
+            results = self.model(data)
+            probes_number = int(results.shape[0])
 
-            for i in range(len(results)):
-                for j in range(i, len(results)):
+            for i in range(probes_number):
+                for j in range(i, probes_number):
                     # if the condition is satisfied, res[i] is very similar to res[j]
                     if i == j and i not in already_placed:
                         clusters[i] = 1
                     elif i in already_placed:
                         break
-                    elif i != j and j not in already_placed and torch.dist(res[i], res[j]) <= self.threshold:
+                    elif i != j and j not in already_placed and torch.dist(results[i], results[j]).item() <= self.threshold:
                         clusters[i] += 1  # Count new probe
                         already_placed.add(j)
-
-            # Probes not grouped
-            # for i in range(len(res)):
-            #     if i not in already_placed:
-            #         clusters[i] = 1
-
-        return len(clusters.keys())
-
+        devices = len(list(filter(lambda x: clusters[x] >= 5, list(clusters.keys()))))
+        return devices

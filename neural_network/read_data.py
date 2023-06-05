@@ -62,7 +62,7 @@ class PreProcessing:
             while line:
                 self._devices_IDs.append(int(line))
                 line = txt_reader.readline()
-        self._total_devices = max(self._devices_IDs)
+        self._total_devices = len(set(self._devices_IDs))
 
         # Read from file using pyshark
         pyshark_packets = pyshark.FileCapture(file + ".pcap")
