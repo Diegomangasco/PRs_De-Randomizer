@@ -1,18 +1,21 @@
 import torch
 from statistics import mean
 from model import *
+from sklearn.cluster import DBSCAN
 
 
 class Experiment:
 
     # Hyper parameters: alpha, beta, threshold, hidden_size, output_size, learning_rate
 
-    def __init__(self, features_number, hidden_size, output_size, alpha, beta, threshold, learning_rate, device):
+    def __init__(self, features, hidden_size, output_size, threshold, learning_rate, device):
         self.device = torch.device("cpu" if device else "cuda:0")
 
         # Setup model
-        input_size = features_number
-        self.model = ProbesEncoder(input_size, hidden_size, output_size)
+        self.features = features
+        if features is not None:
+            self.input_size = len(features)
+        self.model = ProbesEncoder(features, hidden_size, output_size)
         self.model.train()
         self.model.to(self.device)
 
@@ -22,13 +25,12 @@ class Experiment:
         # Setup optimization procedure
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
         self.criterion = nn.BCELoss()
-        self.alpha = alpha
-        self.beta = beta
         self.threshold = threshold
 
     def save_checkpoint(self, path, iteration, best_result, total_train_loss):
         checkpoint = dict()
 
+        checkpoint["features"] = self.features
         checkpoint["iteration"] = iteration
         checkpoint["best_result"] = best_result
         checkpoint["total_train_loss"] = total_train_loss
@@ -40,6 +42,8 @@ class Experiment:
     def load_checkpoint(self, path):
         checkpoint = torch.load(path)
 
+        self.features = checkpoint["features"]
+        self.input_size = len(self.features)
         iteration = checkpoint["iteration"]
         best_result = checkpoint["best_result"]
         total_train_loss = checkpoint["total_train_loss"]
@@ -62,7 +66,7 @@ class Experiment:
                 distance = torch.dist(res[i], res[j]).item()
                 if device_label[i] == device_label[j]:
                     ideal_output.append(1)
-                    if distance <= self.threshold:
+                    if distance < self.threshold:
                         # Classified as similar (True Positive)
                         real_output.append(1)
                     else:
@@ -70,7 +74,7 @@ class Experiment:
                         real_output.append(0)
                 else:
                     ideal_output.append(0)
-                    if distance > self.threshold:
+                    if distance >= self.threshold:
                         # Classified as different (True Negative)
                         real_output.append(0)
                     else:
@@ -108,7 +112,7 @@ class Experiment:
                             # Probes belong to the same device
                             same_distance.append(distance)
                             ideal_output.append(1)
-                            if distance <= self.threshold:
+                            if distance < self.threshold:
                                 # Same device recognized
                                 real_output.append(1)
                             else:
@@ -118,7 +122,7 @@ class Experiment:
                             # Probes don't belong to the same device
                             different_distance.append(distance)
                             ideal_output.append(0)
-                            if distance > self.threshold:
+                            if distance >= self.threshold:
                                 # Different devices recognized:
                                 real_output.append(0)
                             else:
@@ -160,5 +164,8 @@ class Experiment:
                     elif i != j and j not in already_placed and torch.dist(results[i], results[j]).item() <= self.threshold:
                         clusters[i] += 1  # Count new probe
                         already_placed.add(j)
-        devices = len(list(filter(lambda x: clusters[x] >= 5, list(clusters.keys()))))
+        devices = len(list(filter(lambda x: clusters[x] >= 10, list(clusters.keys()))))
+        dbscan = DBSCAN(eps=self.threshold, min_samples=10, metric="euclidean")
+        dbscan.fit(results)
+        print(f"Devices first method: {devices}, Devices DBSCAN: {len(set(dbscan.labels_))}")
         return devices

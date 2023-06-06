@@ -76,20 +76,21 @@ def load_data(file_path: str, batch_size: int):
     return train_dataloader, validation_dataloader, features
 
 
-def load_test(file_path: str, features: list):
+def load_test(file_path: str, features: list = None):
     pre_processing = rd.PreProcessing()
     pre_processing.read_pcap(file_path)
 
     logging.info("Creating test loader")
 
     inputs = pre_processing.get_features()
-    if len(inputs.keys()) > len(features):
-        inputs = inputs[features]
-    elif len(inputs.keys()) < len(features):
-        for i, f in enumerate(features):
-            if f not in inputs.keys():
-                inputs.insert(i, f, array([-1.0 for _ in range(inputs.shape[0])]))
-        inputs = inputs[features]
+    if features is not None:
+        if len(inputs.keys()) > len(features):
+            inputs = inputs[features]
+        elif len(inputs.keys()) < len(features):
+            for i, f in enumerate(features):
+                if f not in inputs.keys():
+                    inputs.insert(i, f, array([-1.0 for _ in range(inputs.shape[0])]))
+            inputs = inputs[features]
     inputs = inputs.to_numpy()
     test_data = torch.tensor(inputs, dtype=torch.float32)
 

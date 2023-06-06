@@ -28,11 +28,9 @@ def parse_arguments():
     parser.add_argument("--cpu", type=str, default="True")
     parser.add_argument("--test", type=str, default="False")
     parser.add_argument("--train", type=str, default="True")
-    parser.add_argument("--max_iterations", type=int, default=300)
+    parser.add_argument("--max_iterations", type=int, default=200)
     parser.add_argument("--learning_rate", type=float, default=1e-3)
-    parser.add_argument("--alpha", type=float, default=1.0)
-    parser.add_argument("--beta", type=float, default=1.0)
-    parser.add_argument("--threshold", type=float, default=2.0)
+    parser.add_argument("--threshold", type=float, default=3.0)
     parser.add_argument("--hidden_size", type=int, default=150)
     parser.add_argument("--output_size", type=int, default=50)
     parser.add_argument("--print_every", type=int, default=5)
@@ -53,17 +51,16 @@ if __name__ == "__main__":
     options = parse_arguments()
 
     experiment = None
+    features = None
 
     if options["train"] == "True":
 
         train_loader, validation_loader, features = load_data(options["input_path"], options["batch_size"])
 
         experiment = Experiment(
-            len(features),
+            features,
             options["hidden_size"],
             options["output_size"],
-            options["alpha"],
-            options["beta"],
             options["threshold"],
             options["learning_rate"],
             options["cpu"]
@@ -89,7 +86,7 @@ if __name__ == "__main__":
                     accuracy, same_distance, different_distance = experiment.validate(validation_loader)
 
                     if options["graph"] == "True":
-                        with open("graphs/10_stats.txt", "a") as fp:
+                        with open("graphs/stats.txt", "a") as fp:
                             fp.write("{} {} {} {}\n".format(iterations, accuracy, same_distance, different_distance))
 
                     logging.info(f"[VALIDATE] at iterations {iterations}")
@@ -104,21 +101,6 @@ if __name__ == "__main__":
                             best_result,
                             total_train_loss
                         )
-                        if options["fine_tuning"] == "True":
-                            logging.info(
-                                "Accuracy (true positive, true negative): {} ({}, {}), iterations: {}, alpha: {}, beta: {}, hidden_size: {}, output_size: {}, threshold: {}\n"
-                                .format(best_result, true_pos, true_neg, iterations,
-                                        options["alpha"],
-                                        options["beta"], options["hidden_size"], options["output_size"],
-                                        options["threshold"]))
-
-                            with open("./fine_tuning.txt", "a") as fp:
-                                fp.write(
-                                    "Accuracy (true positive, true negative): {} ({}, {}), iterations: {}, alpha: {}, beta: {}, hidden_size: {}, output_size: {}, threshold: {}\n"
-                                    .format(best_result, true_pos, true_neg, iterations,
-                                            options["alpha"],
-                                            options["beta"], options["hidden_size"], options["output_size"],
-                                            options["threshold"]))
 
                     experiment.save_checkpoint(
                         f'{options["output_path"]}/last_checkpoint.pth',
@@ -142,6 +124,15 @@ if __name__ == "__main__":
     if options["test"] == "True":
         # Use last_checkpoint.pth since we train before with the optimal number of iterations coming from fine-tuning process
         test_loader, ground_truth = load_test(options["test_path"], features)
+        if experiment is None:
+            experiment = Experiment(
+                features,
+                options["hidden_size"],
+                options["output_size"],
+                options["threshold"],
+                options["learning_rate"],
+                options["cpu"]
+            )
         experiment.load_checkpoint(f'{options["output_path"]}/last_checkpoint.pth')
         count = experiment.test(test_loader)
         logging.info("[COUNT TESTING]")
