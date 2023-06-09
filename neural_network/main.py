@@ -1,4 +1,6 @@
 import argparse
+import logging
+
 from load_data import *
 from experiment import *
 from plot import *
@@ -30,7 +32,7 @@ def parse_arguments():
     parser.add_argument("--train", type=str, default="True")
     parser.add_argument("--max_iterations", type=int, default=200)
     parser.add_argument("--learning_rate", type=float, default=1e-3)
-    parser.add_argument("--threshold", type=float, default=3.0)
+    parser.add_argument("--threshold", type=float, default=2.0)
     parser.add_argument("--hidden_size", type=int, default=150)
     parser.add_argument("--output_size", type=int, default=50)
     parser.add_argument("--print_every", type=int, default=5)
@@ -47,6 +49,8 @@ def parse_arguments():
 if __name__ == "__main__":
 
     start_time = datetime.datetime.now()
+
+    logging.getLogger().setLevel(logging.INFO)
 
     options = parse_arguments()
 
@@ -123,7 +127,6 @@ if __name__ == "__main__":
 
     if options["test"] == "True":
         # Use last_checkpoint.pth since we train before with the optimal number of iterations coming from fine-tuning process
-        test_loader, ground_truth = load_test(options["test_path"], features)
         if experiment is None:
             experiment = Experiment(
                 features,
@@ -133,8 +136,17 @@ if __name__ == "__main__":
                 options["learning_rate"],
                 options["cpu"]
             )
+        logging.info("Logging checkpoint")
         experiment.load_checkpoint(f'{options["output_path"]}/last_checkpoint.pth')
-        count = experiment.test(test_loader)
+        logging.info("Loading test file")
+        test_loader, ground_truth = load_test(options["test_path"], experiment.features)
+        logging.info("Starting test")
+        count_greedy, count_dbscan = experiment.test(test_loader)
         logging.info("[COUNT TESTING]")
         logging.info("Number of devices present in the .pcap file: {}\n".format(ground_truth))
-        logging.info("Number of devices detected: {}\n".format(count))
+        logging.info("Number of devices detected with greedy clustering: {}\n".format(count_greedy))
+        logging.info("Number of devices detected with DBSCAN clustering: {}\n".format(count_dbscan))
+        total_train_time = (datetime.datetime.now() - start_time).seconds / 60
+        logging.info(
+            f"End test, total time = {total_train_time} minutes"
+        )

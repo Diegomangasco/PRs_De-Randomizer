@@ -15,7 +15,9 @@ class Experiment:
         self.features = features
         if features is not None:
             self.input_size = len(features)
-        self.model = ProbesEncoder(features, hidden_size, output_size)
+        else:
+            self.input_size = 330
+        self.model = ProbesEncoder(self.input_size, hidden_size, output_size)
         self.model.train()
         self.model.to(self.device)
 
@@ -154,18 +156,39 @@ class Experiment:
             results = self.model(data)
             probes_number = int(results.shape[0])
 
-            for i in range(probes_number):
-                for j in range(i, probes_number):
-                    # if the condition is satisfied, res[i] is very similar to res[j]
-                    if i == j and i not in already_placed:
-                        clusters[i] = 1
-                    elif i in already_placed:
-                        break
-                    elif i != j and j not in already_placed and torch.dist(results[i], results[j]).item() <= self.threshold:
-                        clusters[i] += 1  # Count new probe
-                        already_placed.add(j)
-        devices = len(list(filter(lambda x: clusters[x] >= 10, list(clusters.keys()))))
-        dbscan = DBSCAN(eps=self.threshold, min_samples=10, metric="euclidean")
+        for i in range(probes_number):
+            for j in range(i, probes_number):
+                # if the condition is satisfied, res[i] is very similar to res[j]
+                if i == j and i not in already_placed:
+                    clusters[i] = set()
+                    clusters[i].add(j)
+                elif i in already_placed:
+                    break
+                elif i != j and j not in already_placed and torch.dist(results[i], results[j]).item() <= self.threshold:
+                    clusters[i].add(j)  # Count new probe
+                    already_placed.add(j)
+
+        already_merged = set()
+        for k1 in clusters.keys():
+            if k1 not in already_merged:
+                available_clusters = set(clusters.keys()) - already_merged
+                available_clusters.remove(k1)
+                for k2 in available_clusters:
+                    counter = 0
+                    already_placed = set()
+                    for e in clusters[k1]:
+                        for t in clusters[k2]:
+                            if t not in already_placed and torch.dist(results[e], results[t]).item() <= self.threshold:
+                                counter += 1
+                                already_placed.add(t)
+                    if counter >= 0.5*len(clusters[k2]):
+                        clusters[k1].union(clusters[k2])
+                        already_merged.add(k2)
+
+        for a in already_merged:
+            clusters.pop(a)
+
+        devices = len(list(filter(lambda x: len(clusters[x]) >= 8, list(clusters.keys()))))
+        dbscan = DBSCAN(eps=self.threshold, min_samples=8, metric="euclidean")
         dbscan.fit(results)
-        print(f"Devices first method: {devices}, Devices DBSCAN: {len(set(dbscan.labels_))}")
-        return devices
+        return devices, len(set(dbscan.labels_))
