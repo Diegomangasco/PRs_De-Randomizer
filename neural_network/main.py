@@ -136,7 +136,7 @@ if __name__ == "__main__":
                 options["learning_rate"],
                 options["cpu"]
             )
-        logging.info("Logging checkpoint")
+        logging.info("Loading checkpoint")
         experiment.load_checkpoint(f'{options["output_path"]}/last_checkpoint.pth')
         logging.info("Loading test file")
         test_loader, ground_truth = load_test(options["test_path"], experiment.features)

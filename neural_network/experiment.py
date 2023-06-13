@@ -146,15 +146,9 @@ class Experiment:
 
         return mean(accuracy_list), mean(same_distance), mean(different_distance)
 
-    def test(self, data):
-        self.model.eval()
+    def greedy_clustering(self, probes_number: int, min_samples: int, data: torch.Tensor, merge_percentage=0.5) -> int:
         clusters = dict()
         already_placed = set()
-
-        with torch.no_grad():
-            data = data.to(self.device)
-            results = self.model(data)
-            probes_number = int(results.shape[0])
 
         for i in range(probes_number):
             for j in range(i, probes_number):
@@ -164,7 +158,7 @@ class Experiment:
                     clusters[i].add(j)
                 elif i in already_placed:
                     break
-                elif i != j and j not in already_placed and torch.dist(results[i], results[j]).item() <= self.threshold:
+                elif i != j and j not in already_placed and torch.dist(data[i], data[j]).item() <= self.threshold:
                     clusters[i].add(j)  # Count new probe
                     already_placed.add(j)
 
@@ -178,17 +172,29 @@ class Experiment:
                     already_placed = set()
                     for e in clusters[k1]:
                         for t in clusters[k2]:
-                            if t not in already_placed and torch.dist(results[e], results[t]).item() <= self.threshold:
+                            if t not in already_placed and torch.dist(data[e], data[t]).item() <= self.threshold:
                                 counter += 1
                                 already_placed.add(t)
-                    if counter >= 0.5*len(clusters[k2]):
+                    if counter >= merge_percentage * len(clusters[k2]):
                         clusters[k1].union(clusters[k2])
                         already_merged.add(k2)
 
         for a in already_merged:
             clusters.pop(a)
 
-        devices = len(list(filter(lambda x: len(clusters[x]) >= 8, list(clusters.keys()))))
+        devices = len(list(filter(lambda x: len(clusters[x]) >= min_samples, list(clusters.keys()))))
+        return devices
+
+    def test(self, data):
+        self.model.eval()
+
+        with torch.no_grad():
+            data = data.to(self.device)
+            results = self.model(data)
+            probes_number = int(results.shape[0])
+
+        greedy = self.greedy_clustering(probes_number, 8, results)
         dbscan = DBSCAN(eps=self.threshold, min_samples=8, metric="euclidean")
         dbscan.fit(results)
-        return devices, len(set(dbscan.labels_))
+        dbscan_result = len(set(dbscan.labels_))
+        return greedy, dbscan_result
