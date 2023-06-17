@@ -16,7 +16,7 @@ class Experiment:
         if features is not None:
             self.input_size = len(features)
         else:
-            self.input_size = 330
+            self.input_size = 328
         self.model = ProbesEncoder(self.input_size, hidden_size, output_size)
         self.model.train()
         self.model.to(self.device)
@@ -49,7 +49,6 @@ class Experiment:
         iteration = checkpoint["iteration"]
         best_result = checkpoint["best_result"]
         total_train_loss = checkpoint["total_train_loss"]
-
         self.model.load_state_dict(checkpoint["model"])
         self.optimizer.load_state_dict(checkpoint["optimizer"])
 
@@ -193,8 +192,9 @@ class Experiment:
             results = self.model(data)
             probes_number = int(results.shape[0])
 
-        greedy = self.greedy_clustering(probes_number, 8, results)
         dbscan = DBSCAN(eps=self.threshold, min_samples=8, metric="euclidean")
         dbscan.fit(results)
         dbscan_result = len(set(dbscan.labels_))
+        greedy = self.greedy_clustering(probes_number, 4, results)
+
         return greedy, dbscan_result

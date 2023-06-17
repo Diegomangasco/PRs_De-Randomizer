@@ -84,26 +84,27 @@ class PreProcessing:
             for i in range(len(pkt.layers)):
                 keys = pkt.layers[i]._all_fields.keys()
                 for k in keys:
-                    value = pkt.layers[i]._all_fields.get(k)
-                    if any(ch.isalpha() or ch == ":" for ch in value):
-                        value = bytes(value, 'utf-8')
-                        value = sha1(value).hexdigest()[:CUT_INDEX]
-                        value = float.fromhex(value)
-                    else:
-                        # Fields that are digits
-                        value = float(value)
-                    # Add the new value to the dictionary
-                    if k in features.keys():
-                        features[k].append(value)
-                    else:
-                        fields.add(k)
-                        features[k] = list()
-                        features[k].append(value)
-            if not start_time:
-                start_time = datetime.datetime.timestamp(pkt.sniff_time)
-                features["time"] = list()
-                fields.add("time")
-            features["time"].append(datetime.datetime.timestamp(pkt.sniff_time) - start_time)
+                    if k != "wlan.ta":
+                        value = pkt.layers[i]._all_fields.get(k)
+                        if any(ch.isalpha() or ch == ":" for ch in value):
+                            value = bytes(value, 'utf-8')
+                            value = sha1(value).hexdigest()[:CUT_INDEX]
+                            value = float.fromhex(value)
+                        else:
+                            # Fields that are digits
+                            value = float(value)
+                        # Add the new value to the dictionary
+                        if k in features.keys():
+                            features[k].append(value)
+                        else:
+                            fields.add(k)
+                            features[k] = list()
+                            features[k].append(value)
+            # if not start_time:
+            #     start_time = datetime.datetime.timestamp(pkt.sniff_time)
+            #     features["time"] = list()
+            #     fields.add("time")
+            # features["time"].append(datetime.datetime.timestamp(pkt.sniff_time) - start_time)
 
         pyshark_packets.close()
 
@@ -126,7 +127,7 @@ class PreProcessing:
 
         # MISSING VALUES
 
-        logging.info("Filling missing fields with mean strategy")
+        logging.info("Filling missing fields with constant strategy")
 
         mean_imputer = SimpleImputer(missing_values=np.nan, strategy="constant", fill_value=-1.0)  # Strategy can change
         features = mean_imputer.fit_transform(features)
