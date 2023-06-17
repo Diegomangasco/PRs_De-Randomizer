@@ -6,19 +6,6 @@ from experiment import *
 from plot import *
 import datetime
 
-'''
-HYPERPARAMETERS
-max_iterations: always 7000 (saving best checkpoints and which iteration), 
-alpha: possible values (0.001, 0.01, 0.1, 1, 10, 100, 1000), 
-beta: possible values (0.001, 0.01, 0.1, 1, 10, 100, 1000), 
-threshold: between 0.0001 and TO VERIFY (step 0.1 => 24 values), 
-hidden_size: possible values (310, 250, 200, 150, 100, 50, 70, 10), 
-output_size: possible values (310, 250, 200, 150, 100, 50, 70, 10) (must be <= hidden_size)
-
-POSSIBLE SETS: 
-7*7*24*36 = 42,336
-'''
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -33,7 +20,7 @@ def parse_arguments():
     parser.add_argument("--max_iterations", type=int, default=200)
     parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--threshold", type=float, default=2.0)
-    parser.add_argument("--hidden_size", type=int, default=200)
+    parser.add_argument("--hidden_size", type=int, default=250)
     parser.add_argument("--output_size", type=int, default=150)
     parser.add_argument("--print_every", type=int, default=5)
     parser.add_argument("--validate_every", type=int, default=10)
@@ -55,11 +42,13 @@ if __name__ == "__main__":
     options = parse_arguments()
 
     experiment = None
-    features = None
 
     if options["train"] == "True":
 
         train_loader, validation_loader, features = load_data(options["input_path"], options["batch_size"])
+
+        with open("./features.txt", "w") as fw:
+            fw.write(features)
 
         experiment = Experiment(
             features,
@@ -128,6 +117,17 @@ if __name__ == "__main__":
     if options["test"] == "True":
         # Use last_checkpoint.pth since we train before with the optimal number of iterations coming from fine-tuning process
         if experiment is None:
+            features = list()
+            with open("./features.txt", "r") as fr:
+                line = fp.readline()
+                elements = line.split(", ")
+                for e in elements:
+                    if any(c == "[" or c == "]" or c == "\n" for c in e):
+                        line.remove("[")
+                        line.remove("]")
+                        line.remove("\n")
+                        features.append(line)
+
             experiment = Experiment(
                 features,
                 options["hidden_size"],

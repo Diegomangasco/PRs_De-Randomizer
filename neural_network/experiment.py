@@ -195,6 +195,6 @@ class Experiment:
         dbscan = DBSCAN(eps=self.threshold, min_samples=8, metric="euclidean")
         dbscan.fit(results)
         dbscan_result = len(set(dbscan.labels_))
-        greedy = self.greedy_clustering(probes_number, 4, results)
+        # greedy = self.greedy_clustering(probes_number, 4, results)
 
-        return greedy, dbscan_result
+        return None, dbscan_result
