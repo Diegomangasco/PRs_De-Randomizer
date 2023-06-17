@@ -48,8 +48,9 @@ if __name__ == "__main__":
         train_loader, validation_loader, features = load_data(options["input_path"], options["batch_size"])
 
         with open("./features.txt", "w") as fw:
-            fw.write(features)
-
+            for f in features:
+                fw.write("{} ".format(f))
+        print("stop")
         experiment = Experiment(
             features,
             options["hidden_size"],
@@ -120,13 +121,13 @@ if __name__ == "__main__":
             features = list()
             with open("./features.txt", "r") as fr:
                 line = fp.readline()
-                elements = line.split(", ")
+                elements = line.split(" ")[:-1]
                 for e in elements:
                     if any(c == "[" or c == "]" or c == "\n" for c in e):
-                        line.remove("[")
-                        line.remove("]")
-                        line.remove("\n")
-                        features.append(line)
+                        e.replace("[", "")
+                        e.replace("]", "")
+                        e.replace("\n", "")
+                        features.append(e)
 
             experiment = Experiment(
                 features,
