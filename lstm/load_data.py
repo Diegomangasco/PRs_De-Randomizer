@@ -71,8 +71,8 @@ def load_data(file_path: str, batch_size: int):
     train_dataset = CustomDatasetTrain(train_data)
     validate_dataset = CustomDatasetTrain(validate_data)
 
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
-    validation_dataloader = DataLoader(validate_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
+    train_dataloader = DataLoader(train_dataset, shuffle=False)
+    validation_dataloader = DataLoader(validate_dataset, shuffle=False)
 
     return train_dataloader, validation_dataloader, features
 
