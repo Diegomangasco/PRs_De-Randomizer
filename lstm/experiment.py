@@ -55,9 +55,8 @@ class Experiment:
         return iteration, best_result, total_train_loss
 
     def train(self, data):
-        x, device_label = data
+        x, device_labels = data
         x = x.to(self.device)
-        device_labels = device_label.numpy()
         devices_number = len(set(device_labels))
         devices_number = devices_number.to(self.device)
 
@@ -78,7 +77,6 @@ class Experiment:
         with torch.no_grad():
             for x, device_labels in data:
                 x = x.to(self.device)
-                device_labels = device_labels.numpy()
                 devices_number = len(set(device_labels))
                 devices_number = devices_number.to(self.device)
 
