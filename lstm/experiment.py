@@ -57,8 +57,8 @@ class Experiment:
     def train(self, data):
         x, device_labels = data
         x = x.to(self.device)
+        device_labels = device_labels.to(self.device)
         devices_number = len(set(device_labels))
-        devices_number = devices_number.to(self.device)
 
         res = self.model(x)
 
@@ -77,8 +77,8 @@ class Experiment:
         with torch.no_grad():
             for x, device_labels in data:
                 x = x.to(self.device)
+                device_labels = device_labels.to(self.device)
                 devices_number = len(set(device_labels))
-                devices_number = devices_number.to(self.device)
 
                 res = self.model(x)
                 pred = torch.argmax(res, dim=-1)

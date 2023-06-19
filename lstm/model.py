@@ -10,12 +10,16 @@ class ProbesEncoder(nn.Module):
             nn.Linear(input_size, input_size),
             nn.BatchNorm1d(hidden_size),
             nn.ReLU(),
-            nn.Dropout(p=0.5),
-            nn.LSTM(input_size, input_size, num_layers=2, batch_first=True, dropout=0.5),
+            nn.Dropout(p=0.5)
+        )
+        self.lstm = nn.LSTM(input_size, input_size, num_layers=2, batch_first=True, dropout=0.5)
+        self.model_2 = nn.Sequential(
             nn.Linear(input_size, 1),
             nn.Dropout(p=0.5)
         )
 
     def forward(self, x):
         x = self.model(x)
+        x, _ = self.lstm(x)
+        x = self.model_2(x)
         return x
