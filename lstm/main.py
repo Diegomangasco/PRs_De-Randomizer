@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
                 if iterations % options["validate_every"] == 0:
 
-                    accuracy, same_distance, different_distance = experiment.validate(validation_loader)
+                    accuracy = experiment.validate(validation_loader)
 
                     if options["graph"] == "True":
                         with open("graphs/stats.txt", "a") as fp:
