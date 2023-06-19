@@ -8,7 +8,7 @@ class ProbesEncoder(nn.Module):
         super(ProbesEncoder, self).__init__()
         self.model = nn.Sequential(
             nn.Linear(input_size, input_size),
-            nn.BatchNorm1d(hidden_size),
+            nn.BatchNorm1d(input_size),
             nn.ReLU(),
             nn.Dropout(p=0.5)
         )
